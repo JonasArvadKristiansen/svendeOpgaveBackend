@@ -1,30 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const users = require('../controllers/users');
+const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
 
-router.post('/loginUser', async (req, res) => {
+router.get('/loginCompanyUser', async (req, res) => {
     const { email, password } = req.body;
 
     if (!(email && password)) {
         return res.status(400).send('Mangler felter udfyldt');
     }
 
-    const response = await users.loginUser(req, res);
+    const response = await companys.loginCompanyUser(req, res);
     if (response.success) {
-        jwt.createJWT(response.user, res);
+        jwt.createJWT(response.companyUser, res);
     } else {
         return res.status(404).json('Adgangskode eller email forkert. Tjek indtastet felter igen');
     }
 });
 
-router.post('/createUser', async (req, res, next) => {
+router.post('/createCompanyUser', async (req, res, next) => {
     //setting varibles
-    const { fullName, password, repeatPassword, email, phonenumber } = req.body;
+    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber } = req.body;
 
     //checking if fields are empty
-    if (!(fullName && password && repeatPassword && email && phonenumber)) {
-        return res.status(400).json('Mangler felter udfyldt');
+    if (!(companyName && password && repeatPassword && companyDescription && address && phonenumber && email && numberOfEmployees && cvrNumber)) {
+        return res.status(400).send('Mangler felter udfyldt');
     }
 
     if (password.length < 8) {
@@ -47,39 +47,23 @@ router.post('/createUser', async (req, res, next) => {
     }
 
     //checks if user exists
-    const userExist = await users.userExist(email);
+    const companyExist = await companys.companyUserExist(email);
 
-    if (userExist) {
-        return res.status(409).json('Bruger eksitere allerede');
+    if (companyExist) {
+        return res.status(409).json('Firma eksitere allerede');
     }
 
     //sends to next endpoint if all checks are cleared
     next();
 });
 
-router.post('/createUser', async (req, res) => {
-    let result = await users.createUser(req, res);
+router.post('/createCompanyUser', async (req, res) => {
+    let result = await companys.createCompanyUser(req, res);
     if (result.success) {
-        jwt.createJWT(result.user, res);
+        jwt.createJWT(result.companyUser, res);
     } else {
-        return res.status(400).json('Nægtet at lave ny bruger');
+        return res.status(400).json('Nægtet at lave ny virksomheds bruger');
     }
-});
-
-router.post('/sendEmail', async (req, res) => {
-
-});
-
-router.put('/updateUser', async (req, res) => {
-
-});
-
-router.put('/updatePassword', async (req, res) => {
-
-});
-
-router.delete('/deleteUser', async (req, res) => {
-
 });
 
 module.exports = router;

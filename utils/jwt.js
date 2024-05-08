@@ -16,41 +16,21 @@ function createJWT(user, res) {
 }
 
 //tjekking if user token is vaild
-function authToken(req, res) {
+function verifyToken(req, res) {
     const authHeader = req.headers['authorization'];
     if (authHeader) {
         // Extract and verify token
-        const token = authHeader.split(' ')[1]; // Remove 'Bearer' prefix
+        const token = authHeader.split(' ')[1]; // Removing 'Bearer' prefix
         jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (err, user) => {
             if (err) return res.sendStatus(403);
-            return res.status(200).json(user);
+            return res.status(200).json('approved');
         });
     } else {
         return res.status(401).send('Unauthorized');
     }
 }
 
-//tjekking if user has already a token
-function tjekIfLogging(req) {
-    return new Promise((resolve, reject) => {
-        const token2 = req.cookies.Authorization;
-
-        if (token2 == null) {
-            resolve(false);
-        }
-
-        jsonwebtoken.verify(token2, process.env.TOKEN_SECRET, (err) => {
-            if (err) {
-                reject(err);
-            }
-
-            resolve(true);
-        });
-    });
-}
-
 module.exports = {
-    authToken,
+    verifyToken,
     createJWT,
-    tjekIfLogging,
 };
