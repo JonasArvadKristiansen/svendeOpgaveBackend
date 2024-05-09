@@ -20,10 +20,10 @@ router.get('/loginCompanyUser', async (req, res) => {
 
 router.post('/createCompanyUser', async (req, res, next) => {
     //setting varibles
-    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber } = req.body;
+    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
 
     //checking if fields are empty
-    if (!(companyName && password && repeatPassword && companyDescription && address && phonenumber && email && numberOfEmployees && cvrNumber)) {
+    if (!(companyName && password && repeatPassword && companyDescription && address && phonenumber && email && numberOfEmployees && cvrNumber && jobtypes)) {
         return res.status(400).send('Mangler felter udfyldt');
     }
 
@@ -64,6 +64,18 @@ router.post('/createCompanyUser', async (req, res) => {
     } else {
         return res.status(400).json('Nægtet at lave ny virksomheds bruger');
     }
+});
+
+router.put('/updateCompanyUser', async (req, res) => {
+    
+});
+
+router.put('/updatePasswordCompanyUser', async (req, res) => {
+
+});
+
+router.delete('/deleteCompanyUser', async (req, res) => {
+
 });
 
 module.exports = router;

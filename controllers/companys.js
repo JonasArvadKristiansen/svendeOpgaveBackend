@@ -10,8 +10,8 @@ const loginCompanyUser = (req) => {
         //select * from database matching the parameter
         db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
             if (err) {
-                //reject the promise if error and returns error 500
-                reject(err);
+                //resolve false if error
+                resolve({ success: false });
             } else if (data.length > 0) {
                 // tjekking if typed password match hashed password from database
                 let passwordhashed = bcrypt.compareSync(
@@ -21,19 +21,20 @@ const loginCompanyUser = (req) => {
 
                 //pwCheck return true if they match
                 if (passwordhashed) {
+                    db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
+                    if (err) {
+                        //resolve false if error
+                resolve({ success: false });
+                    } else if (data.length > 0) {
+                        
+                    }
                     const createdUser = {
-                        id: data[0].insertId,
-                        companyName: data[0].companyName,
-                        companyDescription: data[0].companyDescription,
-                        address: data[0].address,
-                        phonenumber: data[0].phonenumber,
-                        email: data[0].email,
-                        numberOfEmployees: data[0].numberOfEmployees,
-                        cvrNumber: data[0].cvrNumber,
-                        type: 'companyUser'
+                        id: data[0].id,
+                        type: 'Company user'
                     };
 
-                    resolve({ success: true, companyUser: createdUser });
+                        resolve({ success: true, companyUser: createdUser });
+                    });
                 } else {
                     resolve(false);
                 }
@@ -48,8 +49,8 @@ const companyUserExist = (email) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
             if (err) {
-                //reject the promise if error and returns error 500
-                reject(err);
+                //resolve false if error
+                resolve({ success: false });
             } else {
                 //resolve with true or false based on the query result
                 resolve(data.length > 0);
@@ -67,31 +68,33 @@ const createCompanyUser = (req) => {
     let email = req.body.email;
     let numberOfEmployees = req.body.numberOfEmployees;
     let cvrNumber = req.body.cvrNumber;
+    let jobtypes = req.body.jobtypes;
 
     //hashing password user typed
     const hashPassword = bcrypt.hashSync(password, 10);
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
     return new Promise((resolve, reject) => {
-        db.execute(
+        db.query(
             'INSERT INTO companys (companyName ,password, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             [companyName, hashPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber], (err, data) => {
                 if (err) {
-                //reject the promise if error and returns error 500
-                reject(err);
+                //resolve false if error
+                resolve({ success: false });
                 } else {
-                    const createdUser = {
-                        id: data.insertId,
-                        companyName: companyName,
-                        companyDescription: companyDescription,
-                        address: address,
-                        phonenumber: phonenumber,
-                        email: email,
-                        numberOfEmployees: numberOfEmployees,
-                        cvrNumber: cvrNumber,
-                        type: 'companyUser'
-                    };
+                    jobtypes.forEach(element => {
+                        db.query('INSERT INTO jobtypes (name, companyID) VALUES (?, ?)', [element, data.insertId], (err, data) => {
+                            if(err) {
+                                //reject the promise if error and returns error 500
+                                resolve({ success: false });
+                            }
+                            let createdUser = {
+                                id: data.insertId,
+                                type: 'Company user'
+                            };
 
-                    resolve({ success: true, companyUser: createdUser });
+                            resolve({ success: true, companyUser: createdUser });
+                        });
+                    });
                 }
             }
         );

@@ -6,29 +6,31 @@ const loginUser = (req) => {
     let password = req.body.password;
 
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         //select * from database matching the parameter
         db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
             if (err) {
-                //reject the promise if error and returns error 500
-                reject(err);
+                //resolve false if error
+                resolve({ success: false });
             } else if (data.length > 0) {
                 // tjekking if typed password match hashed password from database
-                let passwordhashed = bcrypt.compareSync(
-                    password,
-                    data[0].password
-                );
+                let passwordhashed = bcrypt.compareSync(password, data[0].password);
 
                 //pwCheck return true if they match
                 if (passwordhashed) {
-                    const createdUser = {
-                        id: data[0].insertId,
-                        fullName: data[0].fullName,
-                        email: data[0].email,
-                        phonenumber: data[0].phonenumber,
-                        type: 'normalUser'
-                    };
+                    let createdUser = {};
 
+                    if(data[0].isAdmin === 1) {
+                        createdUser = {
+                            id: data[0].id,
+                            type: 'Admin'
+                        };
+                    } else {
+                        createdUser = {
+                            id: data[0].id,
+                            type: 'Normal user'
+                        };
+                    }
                     resolve({ success: true, user: createdUser });
                 } else {
                     resolve(false);
@@ -41,11 +43,11 @@ const loginUser = (req) => {
 };
 
 const userExist = (email) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, ) => {
         db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
             if (err) {
-                //reject the promise if error and returns error 500
-                reject(err);
+                //resolve false if error
+                resolve({ success: false });
             } else {
                 //resolve with true or false based on the query result
                 resolve(data.length > 0);
@@ -68,26 +70,73 @@ const createUser = (req) => {
             'INSERT INTO users (fullName ,email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)',
             [fullName, email, hashPassword, phonenumber, 0], (err, data) => {
                 if (err) {
-                //reject the promise if error and returns error 500
-                reject(err);
+                //resolve false if error
+                resolve({ success: false });
                 } else {
-                    const createdUser = {
+                    let createdUser = {
                         id: data.insertId,
                         fullName: fullName,
                         email: email,
                         phonenumber: phonenumber,
-                        type: normalUser
+                        type: 'Normal user'
                     };
 
                     resolve({ success: true, user: createdUser });
                 }
-            }
-        );
+            });
     });
 };
 
+const updateUser = (req, userId) => {
+    let updateQuery = 'UPDATE users SET';
+
+    const fieldsForUpdates = [];
+    const valuesForQuery = [];
+    
+    if (req.body.fullName !== undefined) {
+        fieldsForUpdates.push('fullName = ?');
+        valuesForQuery.push(req.body.fullName);
+    }
+
+    if (req.body.email !== undefined) {
+        fieldsForUpdates.push('email = ?');
+        valuesForQuery.push(req.body.email);
+    }
+
+    if (req.body.phonenumber !== undefined) {
+        fieldsForUpdates.push('phonenumber = ?');
+        valuesForQuery.push(req.body.phonenumber);
+    }
+
+    updateQuery += ' ' + fieldsForUpdates.join(', ');
+    updateQuery += ' WHERE id = ?';
+
+    valuesForQuery.push(userId);
+
+    return new Promise((resolve) => {
+        db.query(updateQuery, valuesForQuery, (err, result) => {
+            if (err) {
+                resolve({ success: false });
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
+};
+
+const updateUserPassword = (req) => {
+    
+}
+
+const deleteUser = (req) => {
+
+}
+
 module.exports = {
+    loginUser,
     userExist,
     createUser,
-    loginUser,
+    updateUser,
+    updateUserPassword,
+    deleteUser,
 };
