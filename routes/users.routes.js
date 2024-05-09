@@ -1,5 +1,4 @@
-const express = require('express');
-const router = express.Router();
+const router = require('express').Router();
 const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 

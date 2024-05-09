@@ -1,5 +1,4 @@
-const express = require('express');
-const router = express.Router();
+const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
 
@@ -74,8 +73,20 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
 
 });
 
-router.delete('/deleteCompanyUser', async (req, res) => {
+router.delete('/deleteUser', async (req, res) => {
+    const jwtVerify = await jwt.verifyToken(req);
 
+    if(!jwtVerify.success) {
+        res.status(401).json("Adgangnøgle ikke gyldig")
+    }
+
+    let result = await users.deleteUser(jwtVerify.userId);
+
+    if (result) {
+        return res.status(200).json('Virksomheds bruger profil er slettet');
+    } else {
+        return res.status(400).json('Virksomheds bruger profil kunne ikke slettes');
+    }
 });
 
 module.exports = router;
