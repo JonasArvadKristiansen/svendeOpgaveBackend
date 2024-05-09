@@ -106,9 +106,20 @@ router.put('/updateUser', async (req, res) => {
 
 router.put('/updateUserPassword', async (req, res) => {
     const { oldPassword, newPassword, repeatNewPassword } = req.body;
+    const jwtVerify = await jwt.verifyToken(req);
+
+    if(!jwtVerify.success) {
+        res.status(401).json("Adgangnøgle ikke gyldig")
+    }
 
     if (!(oldPassword && newPassword && repeatNewPassword)) {
         return res.status(400).json('Mangler felter udfyldt');
+    }
+
+    const verifyOldPassword = await users.checkSentPassword(oldPassword, jwtVerify.userId);
+
+    if(!verifyOldPassword.success) {
+        return res.status(409).json('Gamle adgangskode ikke rigtig')
     }
 
     if (newPassword != repeatNewPassword) {
@@ -135,7 +146,19 @@ router.put('/updateUserPassword', async (req, res) => {
 });
 
 router.delete('/deleteUser', async (req, res) => {
+    const jwtVerify = await jwt.verifyToken(req);
 
+    if(!jwtVerify.success) {
+        res.status(401).json("Adgangnøgle ikke gyldig")
+    }
+
+    let result = await users.deleteUser(jwtVerify.userId);
+
+    if (result) {
+        return res.status(200).json('Brugerens profil er slettet');
+    } else {
+        return res.status(400).json('Brugerens profil kunne ikke slettes');
+    }
 });
 
 module.exports = router;

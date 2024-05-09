@@ -3,7 +3,6 @@ require('dotenv').config();
 
 //creating token for a user
 function createJWT(user, res) {
-    console.log(user);
     const accessToken = jsonwebtoken.sign(
         { user: user },
         process.env.TOKEN_SECRET,
@@ -23,15 +22,15 @@ function verifyToken(req) {
         if (authHeader) {
             // Extract and verify token
             const token = authHeader.split(' ')[1]; // Removing 'Bearer' prefix
-            jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+            jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (err, decodedToken) => {
                 if (err) {
                     resolve({ success: false }); // Token verification failed
                 } else {
-                    resolve({ success: true, userId: user.id, type: user.type }); // Token verification succeeded
+                    resolve({ success: true, userId: decodedToken.user.id, type: decodedToken.user.type }); // Token verification succeeded
                 }
             });
         } else {
-            resolve({ success: false }); // No token provided
+            resolve({ success: false }); // No token
         }
     });
 }

@@ -6,7 +6,7 @@ const loginCompanyUser = (req) => {
     let password = req.body.password;
 
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         //select * from database matching the parameter
         db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
             if (err) {
@@ -24,7 +24,7 @@ const loginCompanyUser = (req) => {
                     db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
                     if (err) {
                         //resolve false if error
-                resolve({ success: false });
+                        resolve({ success: false });
                     } else if (data.length > 0) {
                         
                     }
@@ -46,7 +46,7 @@ const loginCompanyUser = (req) => {
 };
 
 const companyUserExist = (email) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, ) => {
         db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
             if (err) {
                 //resolve false if error
@@ -73,13 +73,13 @@ const createCompanyUser = (req) => {
     //hashing password user typed
     const hashPassword = bcrypt.hashSync(password, 10);
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         db.query(
             'INSERT INTO companys (companyName ,password, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             [companyName, hashPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber], (err, data) => {
                 if (err) {
-                //resolve false if error
-                resolve({ success: false });
+                    //resolve false if error
+                    resolve({ success: false });
                 } else {
                     jobtypes.forEach(element => {
                         db.query('INSERT INTO jobtypes (name, companyID) VALUES (?, ?)', [element, data.insertId], (err, data) => {

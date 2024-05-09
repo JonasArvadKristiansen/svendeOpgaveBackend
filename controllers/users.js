@@ -43,7 +43,7 @@ const loginUser = (req) => {
 };
 
 const userExist = (email) => {
-    return new Promise((resolve, ) => {
+    return new Promise((resolve) => {
         db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
             if (err) {
                 //resolve false if error
@@ -56,6 +56,24 @@ const userExist = (email) => {
     });
 };
 
+const checkSentPassword = (password, userId) => {
+    return new Promise((resolve) => {
+        db.query('SELECT * FROM users WHERE id = ?', userId, (err, data) => {
+            if (err) {
+                //resolve false if error
+                resolve({ success: false });
+            } else {
+                let passwordhashed = bcrypt.compareSync(password, data[0].password);
+                if(passwordhashed && data.length > 0) {
+                    resolve({success: true})
+                } else {
+                    resolve({success: false})
+                }
+            }
+        });
+    });
+}
+
 const createUser = (req) => {
     let fullName = req.body.fullName;
     let password = req.body.password;
@@ -65,13 +83,13 @@ const createUser = (req) => {
     //hashing password user typed
     const hashPassword = bcrypt.hashSync(password, 10);
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
-    return new Promise((resolve, reject) => {
-        db.execute(
+    return new Promise((resolve) => {
+        db.query(
             'INSERT INTO users (fullName ,email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)',
             [fullName, email, hashPassword, phonenumber, 0], (err, data) => {
                 if (err) {
-                //resolve false if error
-                resolve({ success: false });
+                    //resolve false if error
+                    resolve({ success: false });
                 } else {
                     let createdUser = {
                         id: data.insertId,
@@ -124,17 +142,38 @@ const updateUser = (req, userId) => {
     });
 };
 
-const updateUserPassword = (req) => {
-    
+const updateUserPassword = (req, userId) => {
+    let newPassword = req.body.newPassword;
+    const hashPassword = bcrypt.hashSync(newPassword, 10);
+
+    return new Promise((resolve) => {
+        db.query('UPDATE users SET password = ? WHERE id = ?', [hashPassword, userId], (err, result) => {
+            if (err) {
+                resolve({ success: false });
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
 }
 
-const deleteUser = (req) => {
-
+const deleteUser = (userId) => {
+    console.log(userId);
+    return new Promise((resolve) => {
+        db.query('DELETE from users WHERE id = ?', userId, (err, result) => {
+            if (err) {
+                resolve({ success: false });
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
 }
 
 module.exports = {
     loginUser,
     userExist,
+    checkSentPassword,
     createUser,
     updateUser,
     updateUserPassword,
