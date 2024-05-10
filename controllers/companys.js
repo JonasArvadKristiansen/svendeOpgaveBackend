@@ -2,8 +2,7 @@ const bcrypt = require('bcrypt');
 const db = require('../utils/DB');
 
 const loginCompanyUser = (req) => {
-    let email = req.body.email;
-    let password = req.body.password;
+    const { email, password } = req.body;
 
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
     return new Promise((resolve) => {
@@ -96,7 +95,7 @@ const checkSentPassword = (password, companyID) => {
 }
 
 const updateCompanyPassword = (req, userId) => {
-    let newPassword = req.body.newPassword;
+    const { newPassword } = req.body;
     const hashPassword = bcrypt.hashSync(newPassword, 10);
 
     return new Promise((resolve, reject) => {

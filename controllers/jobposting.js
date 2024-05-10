@@ -1,17 +1,12 @@
 const db = require('../utils/DB');
 
 const createJobposting = (req, companyID) => {
-    let title = req.body.title;
-    let DESCRIPTION = req.body.DESCRIPTION;
-    let deadline = req.body.deadline;
-    let jobtype = req.body.jobtype;
-    let salary = req.body.salary;
+    const { title, DESCRIPTION, deadline, jobtype, salary} = req.body;
 
     console.log(companyID)
 
     return new Promise((resolve, reject) => {
         db.query('SELECT address, phonenumber, email FROM companys WHERE id = ?', companyID, (err, data) => {
-            console.log(data)
             if (err) {
                 resolve({ success: false });
             } else {

@@ -24,7 +24,7 @@ const allJobpostings = (res) => {
 };
 
 const companyProfile = (req, res) => {
-    let companyID = req.body.companyID;
+    const { companyID } = req.body;
 
     db.query('SELECT companyName , companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber FROM companys WHERE id = ?', companyID, (err, data) => {
         if (err) {
@@ -37,7 +37,7 @@ const companyProfile = (req, res) => {
 };
 
 const jobposting = (req, res) => {
-    let jobpostingId = req.body.jobpostingId;
+    const { jobpostingId } = req.body;
 
     db.query('SELECT * FROM jobpostings WHERE id = ?', jobpostingId, (err, data) => {
         if (err) {

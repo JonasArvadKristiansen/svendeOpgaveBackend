@@ -2,8 +2,7 @@ const bcrypt = require('bcrypt');
 const db = require('../utils/DB');
 
 const loginUser = (req) => {
-    let email = req.body.email;
-    let password = req.body.password;
+    const { email, password } = req.body;
 
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
     return new Promise((resolve, reject) => {
@@ -74,10 +73,7 @@ const getUserInfo = (userId, res) => {
 }
 
 const createUser = (req) => {
-    let fullName = req.body.fullName;
-    let password = req.body.password;
-    let email = req.body.email;
-    let phonenumber = req.body.phonenumber;
+    const { fullName, password, email, phonenumber } = req.body;
 
     //hashing password user typed
     const hashPassword = bcrypt.hashSync(password, 10);
