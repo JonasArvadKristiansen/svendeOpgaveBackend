@@ -71,7 +71,7 @@ router.post('/createUser', async (req, res) => {
     if (result.success) {
         jwt.createJWT(result.user, res);
     } else {
-        return res.status(400).json('Kunne ikke lave ny bruger');
+        return res.status(500).json('Kunne ikke lave ny bruger');
     }
 });
 
@@ -108,7 +108,7 @@ router.put('/updateUser', async (req, res) => {
     if (result.success) {
         return res.status(200).json('Brugeren opdateret');
     } else {
-        return res.status(400).json('Kunne ikke opdatere bruger');
+        return res.status(500).json('Kunne ikke opdatere bruger');
     }
 
 });
@@ -150,7 +150,7 @@ router.put('/updateUserPassword', async (req, res) => {
     if (result.success) {
         return res.status(200).json('Brugerens adgangskode opdateret');
     } else {
-        return res.status(400).json('Kunnne ikke opdatere adgangskoden');
+        return res.status(500).json('Kunnne ikke opdatere adgangskoden');
     }
 });
 
@@ -166,7 +166,7 @@ router.delete('/deleteUser', async (req, res) => {
     if (result.success) {
         return res.status(200).json('Brugerens profil er slettet');
     } else {
-        return res.status(400).json('Brugerens profil kunne ikke slettes eller Brugerens profil kunne ikke findes');
+        return res.status(500).json('Brugerens profil kunne ikke slettes eller Brugerens profil kunne ikke findes');
     }
 });
 

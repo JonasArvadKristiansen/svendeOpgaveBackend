@@ -31,7 +31,7 @@ router.delete('/adminDeleteUser', async (req, res) => {
     if (result.success) {
         return res.status(200).json('Brugerens profil er slettet');
     } else {
-        return res.status(400).json('Brugerens profil kunne ikke slettes eller brugerens profil kunne ikke findes');
+        return res.status(500).json('Brugerens profil kunne ikke slettes eller brugerens profil kunne ikke findes');
     }
 });
 
@@ -53,7 +53,7 @@ router.delete('/adminDeleteCompany', async (req, res) => {
     if (result.success) {
         return res.status(200).json('Virksomheds bruger profil er slettet');
     } else {
-        return res.status(400).json('Virksomheds brugeren kunne ikke slettes eller virksomheds brugeren kunne ikke findes');
+        return res.status(500).json('Virksomheds brugeren kunne ikke slettes eller virksomheds brugeren kunne ikke findes');
     }
 });
 

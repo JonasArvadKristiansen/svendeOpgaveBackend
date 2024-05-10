@@ -50,7 +50,7 @@ router.put('/updateJobposting', async (req, res) => {
     if (result.success) {
         return res.status(200).json('Jobopslag opdateret');
     } else {
-        return res.status(400).json('Kunne ikke opdatere jobopslag');
+        return res.status(500).json('Kunne ikke opdatere jobopslag');
     }
 });
 

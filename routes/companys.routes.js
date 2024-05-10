@@ -57,11 +57,12 @@ router.post('/createCompanyUser', async (req, res, next) => {
 });
 
 router.post('/createCompanyUser', async (req, res) => {
-    let result = await companys.createCompanyUser(req, res);
-    if (result.success) {
+    let resultOfCreateCompany = await companys.createCompanyUser(req, res);
+    if (resultOfCreateCompany.success) {
+        let resultOfCreateJobposting = companys.createJobtypes();
         jwt.createJWT(result.companyUser, res);
     } else {
-        return res.status(400).json('Kunne ikke lave ny virksomheds bruger');
+        return res.status(500).json('Kunne ikke lave ny virksomheds bruger');
     }
 });
 
@@ -106,7 +107,7 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
     if (result.success) {
         return res.status(200).json('Virksomheds brugers adgangskode opdateret');
     } else {
-        return res.status(400).json('Kunne ikke opdatere adgangskoden');
+        return res.status(500).json('Kunne ikke opdatere adgangskoden');
     }
 });
 
@@ -122,7 +123,7 @@ router.delete('/deleteCompanyUser', async (req, res) => {
     if (result.success) {
         return res.status(200).json('Virksomheds bruger profil er slettet');
     } else {
-        return res.status(400).json('Virksomheds bruger kunne ikke slettes eller virksomheds bruger kunne ikke findes');
+        return res.status(500).json('Virksomheds bruger kunne ikke slettes eller virksomheds bruger kunne ikke findes');
     }
 });
 
