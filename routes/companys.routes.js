@@ -58,16 +58,96 @@ router.post('/createCompanyUser', async (req, res, next) => {
 
 router.post('/createCompanyUser', async (req, res) => {
     let resultOfCreateCompany = await companys.createCompanyUser(req, res);
+
     if (resultOfCreateCompany.success) {
-        let resultOfCreateJobposting = companys.createJobtypes();
-        jwt.createJWT(result.companyUser, res);
+        let resultOfCreateJobposting = await companys.createJobtypes(resultOfCreateCompany.CompanyId, resultOfCreateCompany.jobtypesData);
+        
+        if(resultOfCreateJobposting.success) {
+            jwt.createJWT(resultOfCreateCompany.companyUser, res);
+        } else {
+            return res.status(500).json('Kunne ikke lave ny virksomheds brugers jobtyper');
+        }
     } else {
         return res.status(500).json('Kunne ikke lave ny virksomheds bruger');
     }
 });
 
 router.put('/updateCompanyUser', async (req, res) => {
+    const { companyName, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
+    const jwtVerify = await jwt.verifyToken(req);
     
+    if(!(jwtVerify.success)) {
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    }
+
+    if(jwtVerify.type === "Normal user" || jwtVerify.type === "Admin") {
+        return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
+    }
+
+    if (!(companyName || companyDescription || address || phonenumber || email || numberOfEmployees || cvrNumber)) {
+        if(jobtypes) {
+            let deleteJobtypes = await companys.deleteJobtypes(jwtVerify.userId);
+            
+            if(deleteJobtypes.success) {
+                let createNewJobtypes = await companys.createJobtypes(jwtVerify.userId, jobtypes);
+
+                if(createNewJobtypes.success) {
+                    return res.status(200).json('Virksomheds bruger er opdateret');
+                } else {
+                    return res.status(400).json('Virksomheds brugerens jobtyper kunne ikke opdateres');
+                }
+            }
+        } else {
+            return res.status(400).json('Mindst et felt skal være udfyldt');
+        }
+    }
+
+    if(email) {
+        const userExist = await companys.companyUserExist(email);
+
+        if (userExist) {
+            return res.status(409).json('Email allerede i brug');
+        }
+
+        const bannedEmail = await companys.bannedEmailCheck(email);
+        
+        if(bannedEmail) {
+            return res.status(409).json('Email er ikke tiladt at bruge');
+        }
+    }
+
+    let result = await companys.updateCompany(req, jwtVerify.userId);
+
+    if (result.success) {
+        if(jobtypes) {
+            let deleteJobtypes = await companys.deleteJobtypes(jwtVerify.userId);
+            
+            if(!deleteJobtypes.success) {
+                return res.status(400).json('Virksomheds brugerens jobtyper kunne ikke slettes');
+            } 
+            
+            let createNewJobtypes = await companys.createJobtypes(jwtVerify.userId, jobtypes);
+
+            if(!createNewJobtypes.success) {
+                return res.status(500).json('Virksomheds brugerens jobtyper kunne ikke opdateres');
+            }
+        }
+
+        let companyJobpostings = await companys.allCompanysJobpostings(jwtVerify.userId);
+        console.log(companyJobpostings)
+        
+        if(companyJobpostings.jobPostingsCount !== 0) {
+            if(address || phonenumber || email) {
+                let updateJobpostes = await companys.updateJobpostes(jwtVerify.userId ,req);
+                if(!updateJobpostes.success) {
+                    return res.status(200).json('Virksomheds brugerens jobopslag eller jobopslagene ikke opdateret');
+                }
+            }
+        }
+        return res.status(200).json('Virksomheds brugeren er opdateret');
+    } else {
+        return res.status(500).json('Kunne ikke opdatere virksomheds bruger');
+    }
 });
 
 router.put('/updatePasswordCompanyUser', async (req, res) => {

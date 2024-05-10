@@ -7,7 +7,7 @@ router.get('/allCompanys', async (req, res) => {
 });
 
 router.get('/allJobpostings', async (req, res) => {
-    homepage.allJobpostings(res);
+    homepage.allJobpostings(req, res);
 });
 
 router.get('/jobposting', async (req, res) => {

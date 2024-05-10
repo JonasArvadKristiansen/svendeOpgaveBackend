@@ -96,10 +96,16 @@ router.put('/updateUser', async (req, res) => {
     }
 
     if(email) {
-        const userExist = await users.userExist(req.body.email);
+        const userExist = await users.userExist(email);
 
         if (userExist) {
             return res.status(409).json('Email allerede i brug');
+        }
+
+        const bannedEmail = await users.bannedEmailCheck(email);
+        
+        if(bannedEmail) {
+            return res.status(409).json('Email er ikke tiladt at bruge');
         }
     }
 

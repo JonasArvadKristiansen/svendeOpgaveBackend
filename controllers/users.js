@@ -1,6 +1,16 @@
 const bcrypt = require('bcrypt');
 const db = require('../utils/DB');
 
+const getUserInfo = (userId, res) => {
+    db.query('SELECT fullName ,email, phonenumber FROM users WHERE id = ?', userId, (err, data) => {
+        if (err) {
+            return res.status(500).json('SQL fejl');
+        } else {
+            return res.status(200).json(data);
+        }
+    });
+}
+
 const loginUser = (req) => {
     const { email, password } = req.body;
 
@@ -33,6 +43,42 @@ const loginUser = (req) => {
     });
 };
 
+const createUser = (req) => {
+    const { fullName, password, email, phonenumber } = req.body;
+
+    //hashing password user typed
+    const hashPassword = bcrypt.hashSync(password, 10);
+    
+    //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
+    return new Promise((resolve, reject) => {
+        db.query(
+            'INSERT INTO users (fullName ,email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)',
+            [fullName, email, hashPassword, phonenumber, 0], (err, data) => {
+                if (err) {
+                    resolve({ success: false });
+                } else if (data.affectedRows == 0) {
+                    resolve({ success: false });
+                } else {
+                    let createdUser = { id: data.insertId, type: 'Normal user' };
+
+                    resolve({ success: true, user: createdUser });
+                }
+            });
+    });
+};
+
+const bannedEmailCheck = (email) => {
+    return new Promise((resolve, reject ) => {
+        db.query('SELECT * FROM bannedemails WHERE email = ?', email, (err, data) => {
+            if (err) {
+                resolve({ success: false });
+            } else {
+                resolve(data.length > 0);
+            }
+        });
+    });
+}
+
 const userExist = (email) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
@@ -61,40 +107,6 @@ const checkSentPassword = (password, userId) => {
         });
     });
 }
-
-const getUserInfo = (userId, res) => {
-    db.query('SELECT fullName ,email, phonenumber FROM users WHERE id = ?', userId, (err, data) => {
-        if (err) {
-            return res.status(500).json('SQL fejl');
-        } else {
-            return res.status(200).json(data);
-        }
-    });
-}
-
-const createUser = (req) => {
-    const { fullName, password, email, phonenumber } = req.body;
-
-    //hashing password user typed
-    const hashPassword = bcrypt.hashSync(password, 10);
-    
-    //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
-    return new Promise((resolve, reject) => {
-        db.query(
-            'INSERT INTO users (fullName ,email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)',
-            [fullName, email, hashPassword, phonenumber, 0], (err, data) => {
-                if (err) {
-                    resolve({ success: false });
-                } else if (data.affectedRows == 0) {
-                    resolve({ success: false });
-                } else {
-                    let createdUser = { id: data.insertId, type: 'Normal user' };
-
-                    resolve({ success: true, user: createdUser });
-                }
-            });
-    });
-};
 
 const updateUser = (req, userId) => {
     let updateQuery = 'UPDATE users SET ';
@@ -167,13 +179,13 @@ const deleteUser = (userId) => {
 }
 
 module.exports = {
+    getUserInfo,
     loginUser,
+    createUser,
+    bannedEmailCheck,
     userExist,
     checkSentPassword,
-    getUserInfo,
-    createUser,
     updateUser,
     updateUserPassword,
     deleteUser,
-    
 };

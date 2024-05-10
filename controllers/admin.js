@@ -42,6 +42,20 @@ const allData = (req, res) => {
     });
 };
 
+const banEmail = (email) => {
+    return new Promise((resolve, reject) => {
+        db.query('INSERT INTO bannedemails (email) VALUES (?)', email, (err, result) => {
+            if (err) {
+                resolve({ success: false });
+            } else if(result.affectedRows == 0) {
+                resolve({ success: false });
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
+}
+
 const deleteUser = (userId) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from users WHERE id = ?', userId, (err, result) => {
@@ -72,6 +86,7 @@ const deleteCompany = (companyId) => {
 
 module.exports = {
     allData,
+    banEmail,
     deleteUser,
     deleteCompany,
 };

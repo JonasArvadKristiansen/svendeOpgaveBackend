@@ -3,7 +3,6 @@ const admin = require('../controllers/admin');
 const jwt = require('../utils/jwt');
 
 router.get('/allData', async (req, res) => {
-
     let jwtVerify = await jwt.verifyToken(req);
 
     if(jwtVerify.type != "Admin") {
@@ -11,6 +10,28 @@ router.get('/allData', async (req, res) => {
     }
 
     admin.allData(req, res);
+});
+
+router.post('/banEmail', async (req, res) => {
+    const { email } = req.body;
+    
+    if (!(email)) {
+        return res.status(400).json('email mangler');
+    }
+
+    let jwtVerify = await jwt.verifyToken(req);
+
+    if(jwtVerify.type != "Admin") {
+        return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+    }
+
+    let result = await admin.banEmail(email);
+    if(result.success) {
+        return res.status(200).json('Email kan længere bruges på siden');
+    } else {
+        return res.status(500).json('Server fejl. Kunne ikke forbyde email');
+    }
+
 });
 
 router.delete('/adminDeleteUser', async (req, res) => {

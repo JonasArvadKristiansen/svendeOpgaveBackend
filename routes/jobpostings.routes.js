@@ -10,7 +10,7 @@ router.post('/createJobposting', async (req, res) => {
     }
 
     let jwtVerify = await jwt.verifyToken(req);
-    console.log(jwtVerify)
+    
     if(jwtVerify.type != "Company user") {
         return res.status(401).json('Ikke tilladt at lave jobopslag. skift til virksomheds bruger for at oprette opslag');
     }
