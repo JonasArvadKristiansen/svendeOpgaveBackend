@@ -1,7 +1,7 @@
 const db = require('../utils/DB');
 
 const allCompanys = (res) => {
-    db.query('SELECT companyName , companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber FROM companys', (err, data) => {
+    db.query('SELECT companyName, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber FROM companys', (err, data) => {
         if (err) {
             //resolve false if error
             return res.status(500).json('server ikke aktiv')

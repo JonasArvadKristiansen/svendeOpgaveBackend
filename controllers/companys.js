@@ -7,39 +7,28 @@ const loginCompanyUser = (req) => {
 
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
     return new Promise((resolve) => {
-        //select * from database matching the parameter
         db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
             if (err) {
-                //resolve false if error
                 resolve({ success: false });
             } else if (data.length > 0) {
                 // tjekking if typed password match hashed password from database
-                let passwordhashed = bcrypt.compareSync(
-                    password,
-                    data[0].password
-                );
+                let passwordhashed = bcrypt.compareSync(password, data[0].password);
 
-                //pwCheck return true if they match
+                //passwordhashed return true if they match
                 if (passwordhashed) {
                     db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
-                    if (err) {
-                        //resolve false if error
-                        resolve({ success: false });
-                    } else if (data.length > 0) {
-                        
-                    }
-                    const createdUser = {
-                        id: data[0].id,
-                        type: 'Company user'
-                    };
-
-                        resolve({ success: true, companyUser: createdUser });
+                        if (err) {
+                            resolve({ success: false });
+                        } else if (data.length > 0) {
+                            const createdUser = { id: data[0].id, type: 'Company user' };
+                            resolve({ success: true, companyUser: createdUser });
+                        }
                     });
                 } else {
-                    resolve(false);
+                    resolve({ success: false });
                 }
             } else {
-                resolve(false);
+                resolve({ success: false });
             }
         });
     });
@@ -60,41 +49,28 @@ const companyUserExist = (email) => {
 };
 
 const createCompanyUser = (req) => {
-    let companyName = req.body.companyName;
-    let password = req.body.password;
-    let companyDescription = req.body.companyDescription;
-    let address = req.body.address;
-    let phonenumber = req.body.phonenumber;
-    let email = req.body.email;
-    let numberOfEmployees = req.body.numberOfEmployees;
-    let cvrNumber = req.body.cvrNumber;
-    let jobtypes = req.body.jobtypes;
+    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
 
     //hashing password user typed
     const hashPassword = bcrypt.hashSync(password, 10);
     
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         db.query(
             'INSERT INTO companys (companyName ,password, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [companyName, hashPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber], (err, data) => {
+            [companyName, hashPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber], (err, result) => {
                 if (err) {
-                    //resolve false if error
                     resolve({ success: false });
                 } else {
                     jobtypes.forEach(element => {
-                        db.query('INSERT INTO jobtypes (name, companyID) VALUES (?, ?)', [element, data.insertId], (err, data) => {
+                        db.query('INSERT INTO jobtypes (name, companyID) VALUES (?, ?)', [element, result.insertId], (err, data) => {
                             if(err) {
-                                //reject the promise if error and returns error 500
                                 resolve({ success: false });
                             }
-                            let createdUser = {
-                                id: data.insertId,
-                                type: 'Company user'
-                            };
-
-                            resolve({ success: true, companyUser: createdUser });
                         });
+
+                        let createdUser = { id: result.insertId, type: 'Company user' };
+                        resolve({ success: true, companyUser: createdUser });
                     });
                 }
             }
@@ -102,10 +78,44 @@ const createCompanyUser = (req) => {
     });
 };
 
+const checkSentPassword = (password, companyID) => {
+    return new Promise((resolve, reject) => {
+        db.query('SELECT * FROM companys WHERE id = ?', companyID, (err, data) => {
+            if (err) {
+                resolve({ success: false });
+            } else {
+                let passwordhashed = bcrypt.compareSync(password, data[0].password);
+                if(passwordhashed && data.length > 0) {
+                    resolve({success: true})
+                } else {
+                    resolve({success: false})
+                }
+            }
+        });
+    });
+}
+
+const updateCompanyPassword = (req, userId) => {
+    let newPassword = req.body.newPassword;
+    const hashPassword = bcrypt.hashSync(newPassword, 10);
+
+    return new Promise((resolve, reject) => {
+        db.query('UPDATE companys SET password = ? WHERE id = ?', [hashPassword, userId], (err, result) => {
+            if (err) {
+                resolve({ success: false });
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
+}
+
 const deleteCompanyUser = (companyID) => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         db.query('DELETE from companys WHERE id = ?', companyID, (err, result) => {
             if (err) {
+                resolve({ success: false });
+            } else if(result.affectedRows == 0) {
                 resolve({ success: false });
             } else {
                 resolve({ success: true });
@@ -118,5 +128,7 @@ module.exports = {
     loginCompanyUser,
     companyUserExist,
     createCompanyUser,
+    checkSentPassword,
+    updateCompanyPassword,
     deleteCompanyUser,
 };

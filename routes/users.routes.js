@@ -92,7 +92,7 @@ router.put('/updateUser', async (req, res) => {
     }
 
     if (!(fullName || email || phonenumber)) {
-        return res.status(400).json('Mangler felter udfyldt');
+        return res.status(400).json('Mindst et felt skal være udfyldt');
     }
 
     if(email) {
@@ -147,10 +147,10 @@ router.put('/updateUserPassword', async (req, res) => {
 
     let result = await users.updateUserPassword(req, jwtVerify.userId);
 
-    if (result) {
+    if (result.success) {
         return res.status(200).json('Brugerens adgangskode opdateret');
     } else {
-        return res.status(400).json('server nægter at opdatere adgangskoden');
+        return res.status(400).json('Kunnne ikke opdatere adgangskoden');
     }
 });
 
@@ -163,10 +163,10 @@ router.delete('/deleteUser', async (req, res) => {
 
     let result = await users.deleteUser(jwtVerify.userId);
 
-    if (result) {
+    if (result.success) {
         return res.status(200).json('Brugerens profil er slettet');
     } else {
-        return res.status(400).json('Brugerens profil kunne ikke slettes');
+        return res.status(400).json('Brugerens profil kunne ikke slettes eller Brugerens profil kunne ikke findes');
     }
 });
 

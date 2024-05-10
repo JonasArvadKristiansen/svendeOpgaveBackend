@@ -47,6 +47,8 @@ companyID INT NOT NULL,
 address VARCHAR(255) NOT NULL,
 phonenumber INT NOT NULL,
 email VARCHAR(255) NOT NULL,
-løn INT NOT NULL,
+salary INT NOT NULL,
 FOREIGN KEY (companyID) REFERENCES companys(id) ON DELETE CASCADE
 );
+
+INSERT INTO users (fullName, PASSWORD, email, phonenumber, isAdmin) VALUES ("Admin", "$2a$10$tOsbPkE8CtDZWBrlSF3OZuieZGLcwQN5Iqd2pQB.uVd6x2i2fJpRe", "admin@admin.com", 20202020, 1);

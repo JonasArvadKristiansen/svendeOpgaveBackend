@@ -61,7 +61,7 @@ router.post('/createCompanyUser', async (req, res) => {
     if (result.success) {
         jwt.createJWT(result.companyUser, res);
     } else {
-        return res.status(400).json('Nægtet at lave ny virksomheds bruger');
+        return res.status(400).json('Kunne ikke lave ny virksomheds bruger');
     }
 });
 
@@ -70,7 +70,44 @@ router.put('/updateCompanyUser', async (req, res) => {
 });
 
 router.put('/updatePasswordCompanyUser', async (req, res) => {
+    const { oldPassword, newPassword, repeatNewPassword } = req.body;
+    const jwtVerify = await jwt.verifyToken(req);
 
+    if(!jwtVerify.success) {
+        res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret')
+    }
+
+    if (!(oldPassword && newPassword && repeatNewPassword)) {
+        return res.status(400).json('Mangler felter udfyldt');
+    }
+
+    const verifyOldPassword = await companys.checkSentPassword(oldPassword, jwtVerify.userId);
+
+    if(!verifyOldPassword.success) {
+        return res.status(409).json('Gamle adgangskode ikke rigtig')
+    }
+
+    if (newPassword != repeatNewPassword) {
+        return res.status(409).json('Nye Adgangskode felter ikke ens');
+    }
+
+    //RegExp test checks if password contains one upper_case letter
+    const containsUppercase = /[A-Z]/.test(newPassword);
+
+    // RegExp test Checks if the password contains at least one number
+    const containsNumber = /\d/.test(newPassword);
+
+    if (!containsUppercase || !containsNumber) {
+        return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+    }
+
+    let result = await companys.updateCompanyPassword(req, jwtVerify.userId);
+
+    if (result.success) {
+        return res.status(200).json('Virksomheds brugers adgangskode opdateret');
+    } else {
+        return res.status(400).json('Kunne ikke opdatere adgangskoden');
+    }
 });
 
 router.delete('/deleteCompanyUser', async (req, res) => {
@@ -82,10 +119,10 @@ router.delete('/deleteCompanyUser', async (req, res) => {
 
     let result = await companys.deleteCompanyUser(jwtVerify.userId);
 
-    if (result) {
+    if (result.success) {
         return res.status(200).json('Virksomheds bruger profil er slettet');
     } else {
-        return res.status(400).json('Virksomheds bruger profil kunne ikke slettes');
+        return res.status(400).json('Virksomheds bruger kunne ikke slettes eller virksomheds bruger kunne ikke findes');
     }
 });
 
