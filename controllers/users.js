@@ -74,6 +74,17 @@ const checkSentPassword = (password, userId) => {
     });
 }
 
+const getUserInfo = (userId, res) => {
+    db.query('SELECT fullName ,email, phonenumber FROM users WHERE id = ?', userId, (err, data) => {
+        if (err) {
+            //resolve false if error
+            return res.status(500).json('SQL fejl');
+        } else {
+            return res.status(200).json(data);
+        }
+    });
+}
+
 const createUser = (req) => {
     let fullName = req.body.fullName;
     let password = req.body.password;
@@ -158,7 +169,6 @@ const updateUserPassword = (req, userId) => {
 }
 
 const deleteUser = (userId) => {
-    console.log(userId);
     return new Promise((resolve) => {
         db.query('DELETE from users WHERE id = ?', userId, (err, result) => {
             if (err) {
@@ -174,8 +184,10 @@ module.exports = {
     loginUser,
     userExist,
     checkSentPassword,
+    getUserInfo,
     createUser,
     updateUser,
     updateUserPassword,
     deleteUser,
+    
 };

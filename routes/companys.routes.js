@@ -2,7 +2,7 @@ const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
 
-router.get('/loginCompanyUser', async (req, res) => {
+router.post('/loginCompanyUser', async (req, res) => {
     const { email, password } = req.body;
 
     if (!(email && password)) {
@@ -73,14 +73,14 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
 
 });
 
-router.delete('/deleteUser', async (req, res) => {
+router.delete('/deleteCompanyUser', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
     if(!jwtVerify.success) {
-        res.status(401).json("Adgangnøgle ikke gyldig")
+        return res.status(401).json("Token ikke gyldig længere eller er blevet manipuleret")
     }
 
-    let result = await users.deleteUser(jwtVerify.userId);
+    let result = await companys.deleteCompanyUser(jwtVerify.userId);
 
     if (result) {
         return res.status(200).json('Virksomheds bruger profil er slettet');

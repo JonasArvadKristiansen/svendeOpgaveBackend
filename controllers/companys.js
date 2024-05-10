@@ -103,7 +103,6 @@ const createCompanyUser = (req) => {
 };
 
 const deleteCompanyUser = (companyID) => {
-    console.log(companyID);
     return new Promise((resolve) => {
         db.query('DELETE from companys WHERE id = ?', companyID, (err, result) => {
             if (err) {

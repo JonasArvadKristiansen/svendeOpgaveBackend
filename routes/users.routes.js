@@ -2,6 +2,16 @@ const router = require('express').Router();
 const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 
+router.get('/getUserInfo', async (req, res) => {
+    const jwtVerify = await jwt.verifyToken(req);
+    
+    if(jwtVerify.success) {
+        users.getUserInfo(jwtVerify.userId, res);
+    } else {
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    }
+});
+
 router.post('/loginUser', async (req, res) => {
     const { email, password } = req.body;
 
@@ -49,7 +59,7 @@ router.post('/createUser', async (req, res, next) => {
     const userExist = await users.userExist(email);
 
     if (userExist) {
-        return res.status(409).json('Bruger eksitere allerede');
+        return res.status(409).json('Brugeren eksitere allerede');
     }
 
     //sends to next endpoint if all checks are cleared
@@ -61,7 +71,7 @@ router.post('/createUser', async (req, res) => {
     if (result.success) {
         jwt.createJWT(result.user, res);
     } else {
-        return res.status(400).json('Nægtet at lave ny bruger');
+        return res.status(400).json('Kunne ikke lave ny bruger');
     }
 });
 
@@ -74,11 +84,11 @@ router.put('/updateUser', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
     
     if(!(jwtVerify.success)) {
-        return res.status(401).json("Adgangsnøgle ikke gyldig længere eller er blevet manipuleret");
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 
     if(jwtVerify.type === "Company user" || jwtVerify.type === "Admin") {
-        return res.status(401).json("Ikke tilladt, kun jobsøgere kan ændre profil her");
+        return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
     }
 
     if (!(fullName || email || phonenumber)) {
@@ -95,10 +105,10 @@ router.put('/updateUser', async (req, res) => {
 
     let result = await users.updateUser(req, jwtVerify.userId);
 
-    if (result) {
+    if (result.success) {
         return res.status(200).json('Brugeren opdateret');
     } else {
-        return res.status(400).json('Nægtet at opdatere bruger');
+        return res.status(400).json('Kunne ikke opdatere bruger');
     }
 
 });
@@ -108,7 +118,7 @@ router.put('/updateUserPassword', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
     if(!jwtVerify.success) {
-        res.status(401).json("Adgangnøgle ikke gyldig")
+        res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret')
     }
 
     if (!(oldPassword && newPassword && repeatNewPassword)) {
@@ -140,7 +150,7 @@ router.put('/updateUserPassword', async (req, res) => {
     if (result) {
         return res.status(200).json('Brugerens adgangskode opdateret');
     } else {
-        return res.status(400).json('Nægtet at opdatere adgangskode');
+        return res.status(400).json('server nægter at opdatere adgangskoden');
     }
 });
 
@@ -148,7 +158,7 @@ router.delete('/deleteUser', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
     if(!jwtVerify.success) {
-        res.status(401).json("Adgangnøgle ikke gyldig")
+        res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret')
     }
 
     let result = await users.deleteUser(jwtVerify.userId);

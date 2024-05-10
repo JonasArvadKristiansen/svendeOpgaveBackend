@@ -11,7 +11,7 @@ function createJWT(user, res) {
     if (accessToken) {
         return res.status(200).json(accessToken);
     } else {
-        return res.status(500).json('Token failed to be created');
+        return res.status(500).json('Token kunne ikke laves');
     }
 }
 
