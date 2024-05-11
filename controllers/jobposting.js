@@ -1,7 +1,7 @@
 const db = require('../utils/DB');
 
 const createJobposting = (req, companyID) => {
-    const { title, DESCRIPTION, deadline, jobtype, salary} = req.body;
+    const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
     return new Promise((resolve, reject) => {
         db.query('SELECT address, phonenumber, email FROM companys WHERE id = ?', companyID, (err, data) => {
             if (err) {
@@ -9,24 +9,26 @@ const createJobposting = (req, companyID) => {
             } else {
                 db.query(
                     'INSERT INTO jobpostings (title, DESCRIPTION, deadline, jobtype, companyID, address, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [title, DESCRIPTION, deadline, jobtype, companyID, data[0].address, data[0].phonenumber, data[0].email, salary], (err, data) => {
-                        if(err) {
-                            resolve({ success: false })
+                    [title, DESCRIPTION, deadline, jobtype, companyID, data[0].address, data[0].phonenumber, data[0].email, salary],
+                    (err, data) => {
+                        if (err) {
+                            resolve({ success: false });
                         } else {
-                            resolve({ success: true })
+                            resolve({ success: true });
                         }
-                    });
+                    }
+                );
             }
         });
     });
-}
+};
 
 const updateJobposting = (req) => {
     let updateQuery = 'UPDATE jobpostings SET ';
 
     const fieldsForUpdates = [];
     const valuesForQuery = [];
-    
+
     if (req.body.title !== undefined && req.body.title !== null) {
         fieldsForUpdates.push('title = ?');
         valuesForQuery.push(req.body.title);

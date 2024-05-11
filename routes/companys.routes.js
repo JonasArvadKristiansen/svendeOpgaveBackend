@@ -19,10 +19,24 @@ router.post('/loginCompanyUser', async (req, res) => {
 
 router.post('/createCompanyUser', async (req, res, next) => {
     //setting varibles
-    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
+    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } =
+        req.body;
 
     //checking if fields are empty
-    if (!(companyName && password && repeatPassword && companyDescription && address && phonenumber && email && numberOfEmployees && cvrNumber && jobtypes)) {
+    if (
+        !(
+            companyName &&
+            password &&
+            repeatPassword &&
+            companyDescription &&
+            address &&
+            phonenumber &&
+            email &&
+            numberOfEmployees &&
+            cvrNumber &&
+            jobtypes
+        )
+    ) {
         return res.status(400).send('Mangler felter udfyldt');
     }
 
@@ -53,8 +67,8 @@ router.post('/createCompanyUser', async (req, res, next) => {
     }
 
     const bannedEmail = await companys.bannedEmailCheck(email);
-        
-    if(bannedEmail) {
+
+    if (bannedEmail) {
         return res.status(409).json('Email er ikke tiladt at bruge');
     }
 
@@ -67,8 +81,8 @@ router.post('/createCompanyUser', async (req, res) => {
 
     if (resultOfCreateCompany.success) {
         let resultOfCreateJobposting = await companys.createJobtypes(resultOfCreateCompany.CompanyId, resultOfCreateCompany.jobtypesData);
-        
-        if(resultOfCreateJobposting.success) {
+
+        if (resultOfCreateJobposting.success) {
             jwt.createJWT(resultOfCreateCompany.companyUser, res);
         } else {
             return res.status(500).json('Kunne ikke lave ny virksomheds brugers jobtyper');
@@ -81,23 +95,23 @@ router.post('/createCompanyUser', async (req, res) => {
 router.put('/updateCompanyUser', async (req, res) => {
     const { companyName, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
-    
-    if(!(jwtVerify.success)) {
+
+    if (!jwtVerify.success) {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 
-    if(jwtVerify.type === "Normal user" || jwtVerify.type === "Admin") {
+    if (jwtVerify.type === 'Normal user' || jwtVerify.type === 'Admin') {
         return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
     }
 
     if (!(companyName || companyDescription || address || phonenumber || email || numberOfEmployees || cvrNumber)) {
-        if(jobtypes) {
+        if (jobtypes) {
             let deleteJobtypes = await companys.deleteJobtypes(jwtVerify.userId);
-            
-            if(deleteJobtypes.success) {
+
+            if (deleteJobtypes.success) {
                 let createNewJobtypes = await companys.createJobtypes(jwtVerify.userId, jobtypes);
 
-                if(createNewJobtypes.success) {
+                if (createNewJobtypes.success) {
                     return res.status(200).json('Virksomheds bruger er opdateret');
                 } else {
                     return res.status(400).json('Virksomheds brugerens jobtyper kunne ikke opdateres');
@@ -108,7 +122,7 @@ router.put('/updateCompanyUser', async (req, res) => {
         }
     }
 
-    if(email) {
+    if (email) {
         const userExist = await companys.companyUserExist(email);
 
         if (userExist) {
@@ -116,8 +130,8 @@ router.put('/updateCompanyUser', async (req, res) => {
         }
 
         const bannedEmail = await companys.bannedEmailCheck(email);
-        
-        if(bannedEmail) {
+
+        if (bannedEmail) {
             return res.status(409).json('Email er ikke tiladt at bruge');
         }
     }
@@ -125,27 +139,27 @@ router.put('/updateCompanyUser', async (req, res) => {
     let result = await companys.updateCompany(req, jwtVerify.userId);
 
     if (result.success) {
-        if(jobtypes) {
+        if (jobtypes) {
             let deleteJobtypes = await companys.deleteJobtypes(jwtVerify.userId);
-            
-            if(!deleteJobtypes.success) {
+
+            if (!deleteJobtypes.success) {
                 return res.status(400).json('Virksomheds brugerens jobtyper kunne ikke slettes');
-            } 
-            
+            }
+
             let createNewJobtypes = await companys.createJobtypes(jwtVerify.userId, jobtypes);
 
-            if(!createNewJobtypes.success) {
+            if (!createNewJobtypes.success) {
                 return res.status(500).json('Virksomheds brugerens jobtyper kunne ikke opdateres');
             }
         }
 
         let companyJobpostings = await companys.allCompanysJobpostings(jwtVerify.userId);
-        
-        if(companyJobpostings.jobPostingsCount !== 0) {
-            if(address || phonenumber || email) {
-                let updateJobpostes = await companys.updateJobpostes(jwtVerify.userId ,req);
 
-                if(!updateJobpostes.success) {
+        if (companyJobpostings.jobPostingsCount !== 0) {
+            if (address || phonenumber || email) {
+                let updateJobpostes = await companys.updateJobpostes(jwtVerify.userId, req);
+
+                if (!updateJobpostes.success) {
                     return res.status(200).json('Virksomheds brugerens jobopslag eller jobopslagene ikke opdateret');
                 }
             }
@@ -160,8 +174,8 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
     const { oldPassword, newPassword, repeatNewPassword } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
 
-    if(!jwtVerify.success) {
-        res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret')
+    if (!jwtVerify.success) {
+        res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 
     if (!(oldPassword && newPassword && repeatNewPassword)) {
@@ -170,8 +184,8 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
 
     const verifyOldPassword = await companys.checkSentPassword(oldPassword, jwtVerify.userId);
 
-    if(!verifyOldPassword.success) {
-        return res.status(409).json('Gamle adgangskode ikke rigtig')
+    if (!verifyOldPassword.success) {
+        return res.status(409).json('Gamle adgangskode ikke rigtig');
     }
 
     if (newPassword != repeatNewPassword) {
@@ -200,8 +214,8 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
 router.delete('/deleteCompanyUser', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
-    if(!jwtVerify.success) {
-        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret')
+    if (!jwtVerify.success) {
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 
     let result = await companys.deleteCompanyUser(jwtVerify.userId);

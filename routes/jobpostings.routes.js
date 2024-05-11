@@ -3,21 +3,21 @@ const jobpostings = require('../controllers/jobposting');
 const jwt = require('../utils/jwt');
 
 router.post('/createJobposting', async (req, res) => {
-    const { title, DESCRIPTION, deadline, jobtype, salary} = req.body;
+    const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
 
     if (!(title && DESCRIPTION && deadline && jobtype && salary)) {
         return res.status(400).json('Mangler felter udfyldt');
     }
 
     let jwtVerify = await jwt.verifyToken(req);
-    
-    if(jwtVerify.type != "Company user") {
+
+    if (jwtVerify.type != 'Company user') {
         return res.status(401).json('Ikke tilladt at lave jobopslag. skift til virksomheds bruger for at oprette opslag');
     }
 
     let result = await jobpostings.createJobposting(req, jwtVerify.userId);
 
-    if(result.success) {
+    if (result.success) {
         return res.status(200).json('Jobopslag oprettet');
     } else {
         return res.status(500).json('Jobopslag kunne ikke oprettes');
@@ -25,19 +25,19 @@ router.post('/createJobposting', async (req, res) => {
 });
 
 router.put('/updateJobposting', async (req, res) => {
-    const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId} = req.body;
+    const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
 
-    if(!(jobpostingId)) {
+    if (!jobpostingId) {
         return res.status(400).json('Mangler jobpostingId udfyldt');
     }
-    
+
     const jwtVerify = await jwt.verifyToken(req);
-    
-    if(!(jwtVerify.success)) {
+
+    if (!jwtVerify.success) {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 
-    if(jwtVerify.type != "Company user") {
+    if (jwtVerify.type != 'Company user') {
         return res.status(401).json('Ikke tilladt, kun Virksomheds bruger kan ændre opslag');
     }
 
@@ -55,21 +55,21 @@ router.put('/updateJobposting', async (req, res) => {
 });
 
 router.delete('/deleteJobposting', async (req, res) => {
-    const { jobpostingId } = req.body
+    const { jobpostingId } = req.body;
 
-    if(!(jobpostingId)) {
+    if (!jobpostingId) {
         return res.status(400).json('Mangler jobpostingId udfyldt');
     }
 
     let jwtVerify = await jwt.verifyToken(req);
 
-    if(!jwtVerify.success) {
-        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret')
+    if (!jwtVerify.success) {
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 
     let result = await jobpostings.deleteJobposting(jobpostingId);
 
-    if(result.success) {
+    if (result.success) {
         return res.status(200).json('Jobopslag slettet');
     } else {
         return res.status(500).json('Jobopslag kunne ikke slettes');

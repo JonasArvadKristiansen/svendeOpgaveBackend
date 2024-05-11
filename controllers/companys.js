@@ -34,16 +34,18 @@ const loginCompanyUser = (req) => {
 };
 
 const createCompanyUser = (req) => {
-    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
+    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } =
+        req.body;
 
     //hashing password user typed
     const hashPassword = bcrypt.hashSync(password, 10);
-    
+
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
     return new Promise((resolve, reject) => {
         db.query(
             'INSERT INTO companys (companyName ,password, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [companyName, hashPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber], (err, result) => {
+            [companyName, hashPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber],
+            (err, result) => {
                 if (err) {
                     resolve({ success: false });
                 } else {
@@ -57,15 +59,15 @@ const createCompanyUser = (req) => {
 
 const createJobtypes = (CompanyId, jobtypesData) => {
     return new Promise((resolve, reject) => {
-        jobtypesData.forEach(element => {
+        jobtypesData.forEach((element) => {
             db.query('INSERT INTO jobtypes (name, companyID) VALUES (?, ?)', [element, CompanyId], (err, data) => {
-                if(err) {
+                if (err) {
                     resolve({ success: false });
                 }
             });
         });
 
-        resolve({ success: true })
+        resolve({ success: true });
     });
 };
 
@@ -73,16 +75,16 @@ const allCompanysJobpostings = (companyID) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', companyID, (err, result) => {
             if (err) {
-                reject(err)
+                reject(err);
             } else {
                 resolve({ jobPostingsCount: result[0].count });
             }
         });
-    })
+    });
 };
 
 const bannedEmailCheck = (email) => {
-    return new Promise((resolve, reject ) => {
+    return new Promise((resolve, reject) => {
         db.query('SELECT * FROM bannedemails WHERE email = ?', email, (err, data) => {
             if (err) {
                 resolve({ success: false });
@@ -94,7 +96,7 @@ const bannedEmailCheck = (email) => {
 };
 
 const companyUserExist = (email) => {
-    return new Promise((resolve, reject ) => {
+    return new Promise((resolve, reject) => {
         db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
             if (err) {
                 resolve({ success: false });
@@ -112,22 +114,22 @@ const checkSentPassword = (password, companyID) => {
                 resolve({ success: false });
             } else {
                 let passwordhashed = bcrypt.compareSync(password, data[0].password);
-                if(passwordhashed && data.length > 0) {
-                    resolve({success: true})
+                if (passwordhashed && data.length > 0) {
+                    resolve({ success: true });
                 } else {
-                    resolve({success: false})
+                    resolve({ success: false });
                 }
             }
         });
     });
-}
+};
 
 const updateCompany = (req, companyID) => {
     let updateQuery = 'UPDATE companys SET ';
 
     const fieldsForUpdates = [];
     const valuesForQuery = [];
-    
+
     if (req.body.companyName !== undefined && req.body.companyName !== null) {
         fieldsForUpdates.push('companyName = ?');
         valuesForQuery.push(req.body.companyName);
@@ -172,7 +174,7 @@ const updateCompany = (req, companyID) => {
         db.query(updateQuery, valuesForQuery, (err, result) => {
             if (err) {
                 resolve({ success: false });
-            } else if(result.affectedRows == 0) {
+            } else if (result.affectedRows == 0) {
                 resolve({ success: false });
             } else {
                 resolve({ success: true });
@@ -181,14 +183,12 @@ const updateCompany = (req, companyID) => {
     });
 };
 
-
-
 const updateJobpostes = (companyID, req) => {
     let updateQuery = 'UPDATE jobpostings SET ';
 
     const fieldsForUpdates = [];
     const valuesForQuery = [];
-    
+
     if (req.body.address !== undefined && req.body.address !== null) {
         fieldsForUpdates.push('address = ?');
         valuesForQuery.push(req.body.address);
@@ -211,10 +211,9 @@ const updateJobpostes = (companyID, req) => {
 
     return new Promise((resolve, reject) => {
         db.query(updateQuery, valuesForQuery, (err, result) => {
-            console.log(result)
             if (err) {
                 resolve({ success: false });
-            } else if(result.affectedRows == 0) {
+            } else if (result.affectedRows == 0) {
                 resolve({ success: false });
             } else {
                 resolve({ success: true });
@@ -243,7 +242,7 @@ const deleteJobtypes = (companyID) => {
         db.query('DELETE from jobtypes WHERE companyID = ?', companyID, (err, result) => {
             if (err) {
                 resolve({ success: false });
-            } else if(result.affectedRows == 0) {
+            } else if (result.affectedRows == 0) {
                 resolve({ success: false });
             } else {
                 resolve({ success: true });
@@ -257,7 +256,7 @@ const deleteCompanyUser = (companyID) => {
         db.query('DELETE from companys WHERE id = ?', companyID, (err, result) => {
             if (err) {
                 resolve({ success: false });
-            } else if(result.affectedRows == 0) {
+            } else if (result.affectedRows == 0) {
                 resolve({ success: false });
             } else {
                 resolve({ success: true });
