@@ -30,10 +30,10 @@ router.post('/createCompanyUser', async (req, res, next) => {
         return res.status(409).json('Adgangskode for kort');
     }
 
-    //checks if password contains one upper_case letter
+    //RegExp test checks if password contains one upper_case letter
     const containsUppercase = /[A-Z]/.test(password);
 
-    // Checks if the password contains at least one number
+    // RegExp test Checks if the password contains at least one number
     const containsNumber = /\d/.test(password);
 
     if (!containsUppercase || !containsNumber) {
@@ -140,11 +140,11 @@ router.put('/updateCompanyUser', async (req, res) => {
         }
 
         let companyJobpostings = await companys.allCompanysJobpostings(jwtVerify.userId);
-        console.log(companyJobpostings)
         
         if(companyJobpostings.jobPostingsCount !== 0) {
             if(address || phonenumber || email) {
                 let updateJobpostes = await companys.updateJobpostes(jwtVerify.userId ,req);
+
                 if(!updateJobpostes.success) {
                     return res.status(200).json('Virksomheds brugerens jobopslag eller jobopslagene ikke opdateret');
                 }
@@ -201,7 +201,7 @@ router.delete('/deleteCompanyUser', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
     if(!jwtVerify.success) {
-        return res.status(401).json("Token ikke gyldig længere eller er blevet manipuleret")
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret')
     }
 
     let result = await companys.deleteCompanyUser(jwtVerify.userId);

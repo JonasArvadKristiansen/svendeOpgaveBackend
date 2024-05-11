@@ -31,14 +31,10 @@ const allData = (req, res) => {
         })
     ])
     .then(([companyCount, usersCount, jobpostingCount]) => {
-        // Checks if any querys failed during the promise
-        if (companyCount.success === false || usersCount.success === false || jobpostingCount.success === false) {
-            return res.status(500).json('Server fejl');
-        }
-        res.status(200).json({ countOfcompanys: companyCount, countOfUser: usersCount, countOfJobpostings: jobpostingCount });
+        return res.status(200).json({ countOfcompanys: companyCount, countOfUser: usersCount, countOfJobpostings: jobpostingCount });
     }).catch(error => {
         console.error("Fejl i allData controller:", error);
-        res.status(500).json('Server fejl');
+        return res.status(500).json('Server fejl');
     });
 };
 
