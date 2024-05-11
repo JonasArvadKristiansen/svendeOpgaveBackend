@@ -1,6 +1,20 @@
 const bcrypt = require('bcrypt');
 const db = require('../utils/DB');
 
+const getCompanyInfo = (companyId, res) => {
+    db.query(
+        'SELECT companyName ,companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber FROM companys WHERE id = ?',
+        companyId,
+        (err, data) => {
+            if (err) {
+                return res.status(500).json('SQL fejl');
+            } else {
+                return res.status(200).json(data);
+            }
+        }
+    );
+};
+
 const loginCompanyUser = (req) => {
     const { email, password } = req.body;
 
@@ -266,6 +280,7 @@ const deleteCompanyUser = (companyID) => {
 };
 
 module.exports = {
+    getCompanyInfo,
     loginCompanyUser,
     createCompanyUser,
     createJobtypes,

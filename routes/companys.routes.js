@@ -2,6 +2,16 @@ const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
 
+router.get('/getCompanyInfo', async (req, res) => {
+    const jwtVerify = await jwt.verifyToken(req);
+
+    if (jwtVerify.success) {
+        companys.getCompanyInfo(jwtVerify.userId, res);
+    } else {
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    }
+});
+
 router.post('/loginCompanyUser', async (req, res) => {
     const { email, password } = req.body;
 

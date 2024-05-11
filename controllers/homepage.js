@@ -61,7 +61,7 @@ const companyProfile = (req, res) => {
             );
         }),
         new Promise((resolve, reject) => {
-            db.query('SELECT name FROM jobtypes WHERE companyID = ?', [companyID], (err, data) => {
+            db.query('SELECT * FROM jobpostings WHERE companyID = ?', [companyID], (err, data) => {
                 if (err) {
                     console.error('Fejl i jobtypes: ', err);
                 } else {
@@ -70,8 +70,8 @@ const companyProfile = (req, res) => {
             });
         }),
     ])
-        .then(([companyProfileData, jobtypesData]) => {
-            return res.status(200).json({ companyProfileData: companyProfileData, jobtypesData: jobtypesData });
+        .then(([companyProfileData, jobpostingsData]) => {
+            return res.status(200).json({ companyProfileData: companyProfileData, jobpostingsData: jobpostingsData });
         })
         .catch((error) => {
             console.error('Fejl i companyProfile controller:', error);
@@ -80,20 +80,39 @@ const companyProfile = (req, res) => {
 };
 
 const jobposting = (req, res) => {
-    const { jobpostingId } = req.body;
+    const { companyID, jobpostingId } = req.body;
 
-    db.query(
-        'SELECT *, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
-        [jobpostingId],
-        (err, data) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json('Server ikke aktiv');
-            } else {
-                return res.status(200).json(data);
-            }
-        }
-    );
+    Promise.all([
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT *, companys.companyName, companys.companyDescription FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
+                [jobpostingId],
+                (err, data) => {
+                    if (err) {
+                        console.error('Fejl i companys: ', err);
+                    } else {
+                        resolve(data);
+                    }
+                }
+            );
+        }),
+        new Promise((resolve, reject) => {
+            db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', [companyID], (err, data) => {
+                if (err) {
+                    console.error('Fejl i jobtypes: ', err);
+                } else {
+                    resolve(data);
+                }
+            });
+        }),
+    ])
+        .then(([jobpostingData, companyJobpostingsCount]) => {
+            return res.status(200).json({ jobpostingData: jobpostingData, companyJobpostingsCount: companyJobpostingsCount });
+        })
+        .catch((error) => {
+            console.error('Fejl i companyProfile controller:', error);
+            return res.status(500).json('Server fejl');
+        });
 };
 
 module.exports = {

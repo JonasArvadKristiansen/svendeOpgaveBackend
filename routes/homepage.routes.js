@@ -11,6 +11,12 @@ router.get('/allJobpostings', async (req, res) => {
 });
 
 router.get('/jobposting', async (req, res) => {
+    const { companyID, jobpostingId } = req.body;
+
+    if (!jobpostingId && companyID) {
+        return res.status(400).json('jobpostingId mangler');
+    }
+
     const jwtVerify = await jwt.verifyToken(req);
 
     if (!jwtVerify.success) {
@@ -21,6 +27,12 @@ router.get('/jobposting', async (req, res) => {
 });
 
 router.get('/companyProfile', async (req, res) => {
+    const { companyID } = req.body;
+
+    if (!companyID) {
+        return res.status(400).json('companyID mangler');
+    }
+
     const jwtVerify = await jwt.verifyToken(req);
 
     if (!jwtVerify.success) {
