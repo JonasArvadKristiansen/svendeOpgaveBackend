@@ -1,16 +1,36 @@
 const db = require('../utils/DB');
 
 const allCompanys = (req, res) => {
-    db.query(
-        'SELECT companyName, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes.name AS jobtype FROM companys INNER JOIN jobtypes ON jobtypes.companyID = companys.id;',
-        (err, data) => {
-            if (err) {
-                return res.status(500).json('server ikke aktiv');
-            } else {
-                return res.status(200).json(data);
-            }
-        }
-    );
+    Promise.all([
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT id, companyName, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber FROM companys',
+                (err, data) => {
+                    if (err) {
+                        console.error('Fejl i companys: ', err);
+                    } else {
+                        resolve(data);
+                    }
+                }
+            );
+        }),
+        new Promise((resolve, reject) => {
+            db.query('SELECT name, companyID FROM jobtypes', (err, data) => {
+                if (err) {
+                    console.error('Fejl i jobtypes: ', err);
+                } else {
+                    resolve(data);
+                }
+            });
+        }),
+    ])
+        .then(([companyProfilesData, jobtypesData]) => {
+            return res.status(200).json({ companyProfilesData: companyProfilesData, jobtypesData: jobtypesData });
+        })
+        .catch((error) => {
+            console.error('Fejl i companyProfile controller:', error);
+            return res.status(500).json('Server fejl');
+        });
 };
 
 const allJobpostings = (req, res) => {
