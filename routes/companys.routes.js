@@ -52,6 +52,12 @@ router.post('/createCompanyUser', async (req, res, next) => {
         return res.status(409).json('Firma eksitere allerede');
     }
 
+    const bannedEmail = await companys.bannedEmailCheck(email);
+        
+    if(bannedEmail) {
+        return res.status(409).json('Email er ikke tiladt at bruge');
+    }
+
     //sends to next endpoint if all checks are cleared
     next();
 });

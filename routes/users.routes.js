@@ -62,6 +62,12 @@ router.post('/createUser', async (req, res, next) => {
         return res.status(409).json('Brugeren eksitere allerede');
     }
 
+    const bannedEmail = await users.bannedEmailCheck(email);
+        
+    if(bannedEmail) {
+        return res.status(409).json('Email er ikke tiladt at bruge');
+    }
+
     //sends to next endpoint if all checks are cleared
     next();
 });

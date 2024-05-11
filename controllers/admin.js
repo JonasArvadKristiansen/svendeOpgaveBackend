@@ -12,7 +12,7 @@ const allData = (req, res) => {
             });
         }),
         new Promise((resolve, reject) => {
-            db.query('SELECT COUNT(*) AS count FROM users', (err, result) => {
+            db.query('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 0', (err, result) => {
                 if (err) {
                     console.error("Fejl i users count query:", err);
                 } else {

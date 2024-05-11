@@ -55,13 +55,19 @@ router.put('/updateJobposting', async (req, res) => {
 });
 
 router.delete('/deleteJobposting', async (req, res) => {
+    const { jobpostingId } = req.body
+
+    if(!(jobpostingId)) {
+        return res.status(400).json('Mangler jobpostingId udfyldt');
+    }
+
     let jwtVerify = await jwt.verifyToken(req);
 
     if(!jwtVerify.success) {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret')
     }
 
-    let result = await jobpostings.deleteJobposting(req.body.jobpostingId);
+    let result = await jobpostings.deleteJobposting(jobpostingId);
 
     if(result.success) {
         return res.status(200).json('Jobopslag slettet');
