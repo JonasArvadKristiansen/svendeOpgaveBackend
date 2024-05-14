@@ -1,6 +1,63 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
+const app = express();
 const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
+const passport = require('passport');
+const rateLimit = require('express-rate-limit');
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: "Too many login attempts, please try again later." } });
+const FacebookStrategy = require('passport-facebook').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+require('dotenv').config();
+
+// Middleware for initialisere Passport
+router.use(passport.initialize());
+
+passport.use(new FacebookStrategy({
+    clientID: `${process.env.FACEBOOK_clientID}`, // key from facebook developer
+    clientSecret: `${process.env.FACEBOOK_clientSecret}`, // key from facebook developer
+    callbackURL: "http://localhost:3000/auth/facebook/callback", //part of offical documentation to call it this
+    profileFields: ['displayName', 'email'], //values collected from facebook profile after success login
+    enableProof: true //sha256 hash of your accesstoken, using clientSecret for protection against outside attacks
+  },
+  function(accessToken, refreshToken, profile, callback) { // this part is called after users login regardless if success or fail
+    if (!profile || !profile.emails) { //check for values in the profile varible. if empty it failed
+        return callback(new Error('Profile information is incomplete'));
+    }
+    
+    //token payload
+    const tokenPayload = {
+      fullName: profile.displayName,
+      email: profile.emails[0].value,
+      type: "Facebook user"
+    };
+
+    //saves by default tokenPayload in req.user
+    return callback(null, tokenPayload);
+  }
+));
+
+passport.use(new GoogleStrategy({
+    clientID: `${process.env.GOOGLE_clientID}`,
+    clientSecret: `${process.env.GOOGLE_clientSecret}`,
+    callbackURL: "http://localhost:3000/auth/google/callback"
+  },
+  function(accessToken, refreshToken, profile, callback) {
+    if (!profile || !profile.emails) { //check for values in the profile varible. if empty it failed
+        return callback(new Error('Profile information is incomplete'));
+    }
+    
+    //token payload
+    const tokenPayload = {
+        fullName: profile.displayName,
+        email: profile.emails[0].value,
+        type: "Google user"
+      };
+  
+      //saves by default tokenPayload in req.user
+      return callback(null, tokenPayload);
+  }
+));
 
 router.get('/getUserInfo', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
@@ -12,7 +69,7 @@ router.get('/getUserInfo', async (req, res) => {
     }
 });
 
-router.post('/loginUser', async (req, res) => {
+router.post('/loginUser', loginLimit, async (req, res) => {
     const { email, password } = req.body;
 
     if (!(email && password)) {
@@ -25,6 +82,30 @@ router.post('/loginUser', async (req, res) => {
     } else {
         return res.status(404).json('Adgangskode eller email forkert. Tjek indtastet felter igen');
     }
+});
+
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get('/auth/google/callback', passport.authenticate('google', { session: false }), function(req, res) {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Login for facebook failed' });
+    }
+        // If authentication succeeds, create JWT 
+        jwt.createJWT(req.user, res);
+    }
+);
+
+// Endpoint for Facebook login
+router.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
+
+//Endpoint gets called here after users login to facebook
+router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), function(req, res) {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Login for facebook failed' });
+    }
+        // If authentication succeeds, create JWT 
+        jwt.createJWT(req.user, res);       
 });
 
 router.post('/createUser', async (req, res, next) => {

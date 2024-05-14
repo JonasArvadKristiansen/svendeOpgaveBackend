@@ -5,15 +5,15 @@ require('dotenv').config();
 function createJWT(user, res) {
     const accessToken = jsonwebtoken.sign({ user: user }, process.env.TOKEN_SECRET, { expiresIn: 60 * 60 });
     if (accessToken) {
-        return res.status(200).json(accessToken);
+        return res.status(200).json({ token: accessToken });
     } else {
-        return res.status(500).json('Token kunne ikke laves');
+        return res.status(500).json({ message: 'Token could not be created' });
     }
 }
 
 //tjekking if user token is vaild
 function verifyToken(req) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const authHeader = req.headers['authorization'];
         if (authHeader) {
             // Extract and verify token

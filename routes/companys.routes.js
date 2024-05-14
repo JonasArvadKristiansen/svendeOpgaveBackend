@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
+const rateLimit = require('express-rate-limit');
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: "Too many login attempts, please try again later." } });
 
 router.get('/getCompanyInfo', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
@@ -12,7 +14,7 @@ router.get('/getCompanyInfo', async (req, res) => {
     }
 });
 
-router.post('/loginCompanyUser', async (req, res) => {
+router.post('/loginCompanyUser', loginLimit, async (req, res) => {
     const { email, password } = req.body;
 
     if (!(email && password)) {
