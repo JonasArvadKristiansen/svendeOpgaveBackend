@@ -167,7 +167,9 @@ router.post('/createUser', async (req, res) => {
     }
 });
 
-router.post('/sendEmail', async (req, res) => {});
+router.post('/sendEmail', async (req, res) => {
+
+});
 
 router.put('/updateUser', async (req, res) => {
     const { fullName, email, phonenumber } = req.body;
@@ -177,7 +179,7 @@ router.put('/updateUser', async (req, res) => {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 
-    if (jwtVerify.type === 'Company user' || jwtVerify.type === 'Admin') {
+    if (jwtVerify.type != 'Normal user') {
         return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
     }
 
@@ -214,6 +216,10 @@ router.put('/updateUserPassword', async (req, res) => {
 
     if (!jwtVerify.success) {
         res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    }
+
+    if (jwtVerify.type != 'Normal user' || jwtVerify.type != 'Admin') {
+        return res.status(401).json('Ikke tilladt, kun jobsøgere og admin kan opdatere adgangskode her');
     }
 
     if (!(oldPassword && newPassword && repeatNewPassword)) {
@@ -254,6 +260,10 @@ router.delete('/deleteUser', async (req, res) => {
 
     if (!jwtVerify.success) {
         res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    }
+
+    if (jwtVerify.type != 'Normal user') {
+        return res.status(401).json('Ikke tilladt, kun jobsøgere kan slette profil her');
     }
 
     let result = await users.deleteUser(jwtVerify.userId);

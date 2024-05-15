@@ -22,7 +22,7 @@ router.post('/banEmail', async (req, res) => {
     let jwtVerify = await jwt.verifyToken(req);
 
     if (jwtVerify.type != 'Admin') {
-        return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+        return res.status(401).json('Ikke tilladt at ban. Kun admin har tilladelse');
     }
 
     let result = await admin.banEmail(email);

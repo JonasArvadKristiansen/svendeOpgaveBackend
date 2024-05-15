@@ -7,6 +7,10 @@ const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { erro
 router.get('/getCompanyInfo', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
+    if (jwtVerify.type != 'Company user') {
+        return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan se profil her');
+    }
+
     if (jwtVerify.success) {
         companys.getCompanyInfo(jwtVerify.userId, res);
     } else {
@@ -88,13 +92,13 @@ router.post('/createCompanyUser', async (req, res) => {
 router.put('/updateCompanyUser', async (req, res) => {
     const { companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
+    
+    if (jwtVerify.type != 'Company user') {
+        return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan ændre profil her');
+    }
 
     if (!jwtVerify.success) {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-    }
-
-    if (jwtVerify.type === 'Normal user' || jwtVerify.type === 'Admin') {
-        return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
     }
 
     if (!(companyName || companyDescription || address || city || phonenumber || email || numberOfEmployees || cvrNumber || jobtypes)) {
@@ -141,6 +145,10 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
     const { oldPassword, newPassword, repeatNewPassword } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
 
+    if (jwtVerify.type != 'Company user') {
+        return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan ændre adgangskode her');
+    }
+
     if (!jwtVerify.success) {
         res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
@@ -180,6 +188,10 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
 
 router.delete('/deleteCompanyUser', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
+
+    if (jwtVerify.type != 'Company user') {
+        return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan slette profil her');
+    }
 
     if (!jwtVerify.success) {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');

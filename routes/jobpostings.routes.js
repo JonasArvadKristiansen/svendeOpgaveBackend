@@ -72,6 +72,10 @@ router.delete('/deleteJobposting', async (req, res) => {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 
+    if (jwtVerify.type != 'Company user') {
+        return res.status(401).json('Ikke tilladt, kun Virksomheds brugers kan slette opslag');
+    }
+
     let result = await jobpostings.deleteJobposting(jobpostingId);
 
     if (result.success) {
