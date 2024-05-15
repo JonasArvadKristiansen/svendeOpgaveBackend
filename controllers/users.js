@@ -4,6 +4,7 @@ const db = require('../utils/DB');
 const getUserInfo = (userId, res) => {
     db.query('SELECT fullName ,email, phonenumber FROM users WHERE id = ?', userId, (err, data) => {
         if (err) {
+            console.error(err);
             return res.status(500).json('SQL fejl');
         } else {
             return res.status(200).json(data);
@@ -18,6 +19,7 @@ const loginUser = (req) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else if (data.length > 0) {
                 // tjekking if typed password match hashed password from database
@@ -56,6 +58,7 @@ const createUser = (req) => {
             [fullName, email, hashPassword, phonenumber, 0],
             (err, data) => {
                 if (err) {
+                    console.error(err);
                     resolve({ success: false });
                 } else if (data.affectedRows == 0) {
                     resolve({ success: false });
@@ -73,6 +76,7 @@ const bannedEmailCheck = (email) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM bannedemails WHERE email = ?', email, (err, data) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else {
                 resolve(data.length > 0);
@@ -85,6 +89,7 @@ const userExist = (email) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else {
                 resolve(data.length > 0);
@@ -97,6 +102,7 @@ const checkSentPassword = (password, userId) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM users WHERE id = ?', userId, (err, data) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else {
                 let passwordhashed = bcrypt.compareSync(password, data[0].password);
@@ -139,6 +145,7 @@ const updateUser = (req, userId) => {
     return new Promise((resolve, reject) => {
         db.query(updateQuery, valuesForQuery, (err, result) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else if (result.affectedRows == 0) {
                 resolve({ success: false });
@@ -156,6 +163,7 @@ const updateUserPassword = (req, userId) => {
     return new Promise((resolve, reject) => {
         db.query('UPDATE users SET password = ? WHERE id = ?', [hashPassword, userId], (err, result) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else if (result.affectedRows == 0) {
                 resolve({ success: false });
@@ -170,6 +178,7 @@ const deleteUser = (userId) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from users WHERE id = ?', userId, (err, result) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else if (result.affectedRows == 0) {
                 resolve({ success: false });

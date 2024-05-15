@@ -5,7 +5,7 @@ const allData = (req, res) => {
         new Promise((resolve, reject) => {
             db.query('SELECT COUNT(*) AS count FROM companys', (err, result) => {
                 if (err) {
-                    console.error('Fejl i companys count query:', err);
+                    console.error(err);
                 } else {
                     resolve(result[0].count);
                 }
@@ -14,7 +14,7 @@ const allData = (req, res) => {
         new Promise((resolve, reject) => {
             db.query('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 0', (err, result) => {
                 if (err) {
-                    console.error('Fejl i users count query:', err);
+                    console.error(err);
                 } else {
                     resolve(result[0].count);
                 }
@@ -23,7 +23,7 @@ const allData = (req, res) => {
         new Promise((resolve, reject) => {
             db.query('SELECT COUNT(*) AS count FROM jobpostings', (err, result) => {
                 if (err) {
-                    console.error('Fejl i jobpostings count query:', err);
+                    console.error(err);
                 } else {
                     resolve(result[0].count);
                 }
@@ -33,8 +33,8 @@ const allData = (req, res) => {
         .then(([companyCount, usersCount, jobpostingCount]) => {
             return res.status(200).json({ countOfcompanys: companyCount, countOfUser: usersCount, countOfJobpostings: jobpostingCount });
         })
-        .catch((error) => {
-            console.error('Fejl i allData controller:', error);
+        .catch((err) => {
+            console.error(err);
             return res.status(500).json('Server fejl');
         });
 };
@@ -43,6 +43,7 @@ const banEmail = (email) => {
     return new Promise((resolve, reject) => {
         db.query('INSERT INTO bannedemails (email) VALUES (?)', email, (err, result) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else if (result.affectedRows == 0) {
                 resolve({ success: false });
@@ -57,6 +58,7 @@ const deleteUser = (userId) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from users WHERE id = ?', userId, (err, result) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else if (result.affectedRows == 0) {
                 resolve({ success: false });
@@ -71,6 +73,7 @@ const deleteCompany = (companyId) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from companys WHERE id = ?', companyId, (err, result) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else if (result.affectedRows == 0) {
                 resolve({ success: false });

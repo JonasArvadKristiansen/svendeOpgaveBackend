@@ -11,9 +11,9 @@ router.get('/allJobpostings', async (req, res) => {
 });
 
 router.get('/jobposting', async (req, res) => {
-    const { companyID, jobpostingId } = req.body;
+    const {jobpostingId } = req.body;
 
-    if (!jobpostingId && companyID) {
+    if (!jobpostingId) {
         return res.status(400).json('jobpostingId mangler');
     }
 

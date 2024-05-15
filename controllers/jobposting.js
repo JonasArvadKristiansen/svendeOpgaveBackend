@@ -3,15 +3,17 @@ const db = require('../utils/DB');
 const createJobposting = (req, companyID) => {
     const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
     return new Promise((resolve, reject) => {
-        db.query('SELECT address, phonenumber, email FROM companys WHERE id = ?', companyID, (err, data) => {
+        db.query('SELECT address, city, phonenumber, email FROM companys WHERE id = ?', companyID, (err, data) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else {
                 db.query(
-                    'INSERT INTO jobpostings (title, DESCRIPTION, deadline, jobtype, companyID, address, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [title, DESCRIPTION, deadline, jobtype, companyID, data[0].address, data[0].phonenumber, data[0].email, salary],
+                    'INSERT INTO jobpostings (title, DESCRIPTION, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [title, DESCRIPTION, deadline, jobtype, companyID, data[0].address, data[0].city, data[0].phonenumber, data[0].email, salary],
                     (err, data) => {
                         if (err) {
+                            console.error(err);
                             resolve({ success: false });
                         } else {
                             resolve({ success: true });
@@ -62,6 +64,7 @@ const updateJobposting = (req) => {
     return new Promise((resolve, reject) => {
         db.query(updateQuery, valuesForQuery, (err, result) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else {
                 resolve({ success: true });
@@ -70,10 +73,37 @@ const updateJobposting = (req) => {
     });
 };
 
+const plusCompanyJobpostingCount = (companyID) => {
+    return new Promise((resolve, reject) => {
+        db.query('UPDATE companys SET jobpostingCount = jobpostingCount + 1 WHERE id = ?', companyID, (err, result) => {
+            if (err) {
+                console.error(err);
+                resolve({success: false});
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
+}
+
+const minusCompanyJobpostingCount = (companyID) => {
+    return new Promise((resolve, reject) => {
+        db.query('UPDATE companys SET jobpostingCount = jobpostingCount - 1 WHERE id = ?', companyID, (err, result) => {
+            if (err) {
+                console.error(err);
+                resolve({success: false});
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
+}
+
 const deleteJobposting = (jobpostingId) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from jobpostings WHERE id = ?', jobpostingId, (err, result) => {
             if (err) {
+                console.error(err);
                 resolve({ success: false });
             } else {
                 resolve({ success: true });
@@ -85,5 +115,7 @@ const deleteJobposting = (jobpostingId) => {
 module.exports = {
     createJobposting,
     updateJobposting,
+    plusCompanyJobpostingCount,
+    minusCompanyJobpostingCount,
     deleteJobposting,
 };

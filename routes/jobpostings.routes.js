@@ -18,7 +18,12 @@ router.post('/createJobposting', async (req, res) => {
     let result = await jobpostings.createJobposting(req, jwtVerify.userId);
 
     if (result.success) {
-        return res.status(200).json('Jobopslag oprettet');
+        let jobposting = await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId)
+        if(jobposting.success) {
+            return res.status(200).json('Jobopslag oprettet');    
+        } else {
+            return res.status(200).json('Jobopslag oprettet, men kunne ikke opdatere virksomheds bruger jobopslag tæller');
+        }
     } else {
         return res.status(500).json('Jobopslag kunne ikke oprettes');
     }
@@ -38,7 +43,7 @@ router.put('/updateJobposting', async (req, res) => {
     }
 
     if (jwtVerify.type != 'Company user') {
-        return res.status(401).json('Ikke tilladt, kun Virksomheds bruger kan ændre opslag');
+        return res.status(401).json('Ikke tilladt, kun Virksomheds brugers kan ændre opslag');
     }
 
     if (!(title || DESCRIPTION || deadline || jobtype || salary)) {
@@ -70,7 +75,12 @@ router.delete('/deleteJobposting', async (req, res) => {
     let result = await jobpostings.deleteJobposting(jobpostingId);
 
     if (result.success) {
-        return res.status(200).json('Jobopslag slettet');
+        let jobposting = await jobpostings.minusCompanyJobpostingCount(jwtVerify.userId)
+        if(jobposting.success) {
+            return res.status(200).json('Jobopslag slettet');    
+        } else {
+            return res.status(200).json('Jobopslag slettet, men kunne ikke opdatere virksomheds brugers jobopslag tæller');
+        }
     } else {
         return res.status(500).json('Jobopslag kunne ikke slettes');
     }

@@ -2,7 +2,7 @@ const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
 const rateLimit = require('express-rate-limit');
-const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: "Too many login attempts, please try again later." } });
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: 'Too many login attempts, please try again later.' } });
 
 router.get('/getCompanyInfo', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
@@ -31,24 +31,11 @@ router.post('/loginCompanyUser', loginLimit, async (req, res) => {
 
 router.post('/createCompanyUser', async (req, res, next) => {
     //setting varibles
-    const { companyName, password, repeatPassword, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } =
+    const { companyName, password, repeatPassword, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } =
         req.body;
 
     //checking if fields are empty
-    if (
-        !(
-            companyName &&
-            password &&
-            repeatPassword &&
-            companyDescription &&
-            address &&
-            phonenumber &&
-            email &&
-            numberOfEmployees &&
-            cvrNumber &&
-            jobtypes
-        )
-    ) {
+    if (!(companyName && password && repeatPassword && companyDescription && address && city && phonenumber && email && numberOfEmployees && cvrNumber && jobtypes)) {
         return res.status(400).send('Mangler felter udfyldt');
     }
 
@@ -92,20 +79,14 @@ router.post('/createCompanyUser', async (req, res) => {
     let resultOfCreateCompany = await companys.createCompanyUser(req, res);
 
     if (resultOfCreateCompany.success) {
-        let resultOfCreateJobposting = await companys.createJobtypes(resultOfCreateCompany.CompanyId, resultOfCreateCompany.jobtypesData);
-
-        if (resultOfCreateJobposting.success) {
-            jwt.createJWT(resultOfCreateCompany.companyUser, res);
-        } else {
-            return res.status(500).json('Kunne ikke lave ny virksomheds brugers jobtyper');
-        }
+        jwt.createJWT(resultOfCreateCompany.companyUser, res);
     } else {
         return res.status(500).json('Kunne ikke lave ny virksomheds bruger');
     }
 });
 
 router.put('/updateCompanyUser', async (req, res) => {
-    const { companyName, companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
+    const { companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
 
     if (!jwtVerify.success) {
@@ -116,22 +97,8 @@ router.put('/updateCompanyUser', async (req, res) => {
         return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
     }
 
-    if (!(companyName || companyDescription || address || phonenumber || email || numberOfEmployees || cvrNumber)) {
-        if (jobtypes) {
-            let deleteJobtypes = await companys.deleteJobtypes(jwtVerify.userId);
-
-            if (deleteJobtypes.success) {
-                let createNewJobtypes = await companys.createJobtypes(jwtVerify.userId, jobtypes);
-
-                if (createNewJobtypes.success) {
-                    return res.status(200).json('Virksomheds bruger er opdateret');
-                } else {
-                    return res.status(400).json('Virksomheds brugerens jobtyper kunne ikke opdateres');
-                }
-            }
-        } else {
-            return res.status(400).json('Mindst et felt skal være udfyldt');
-        }
+    if (!(companyName || companyDescription || address || city || phonenumber || email || numberOfEmployees || cvrNumber || jobtypes)) {
+        return res.status(400).json('Mindst et felt skal være udfyldt');
     }
 
     if (email) {
@@ -151,31 +118,19 @@ router.put('/updateCompanyUser', async (req, res) => {
     let result = await companys.updateCompany(req, jwtVerify.userId);
 
     if (result.success) {
-        if (jobtypes) {
-            let deleteJobtypes = await companys.deleteJobtypes(jwtVerify.userId);
-
-            if (!deleteJobtypes.success) {
-                return res.status(400).json('Virksomheds brugerens jobtyper kunne ikke slettes');
-            }
-
-            let createNewJobtypes = await companys.createJobtypes(jwtVerify.userId, jobtypes);
-
-            if (!createNewJobtypes.success) {
-                return res.status(500).json('Virksomheds brugerens jobtyper kunne ikke opdateres');
-            }
-        }
-
         let companyJobpostings = await companys.allCompanysJobpostings(jwtVerify.userId);
 
-        if (companyJobpostings.jobPostingsCount !== 0) {
-            if (address || phonenumber || email) {
+        if (companyJobpostings.jobPostingsCount !== 0 && companyJobpostings.success) {
+            if (address || city || phonenumber || email) {
                 let updateJobpostes = await companys.updateJobpostes(jwtVerify.userId, req);
 
                 if (!updateJobpostes.success) {
                     return res.status(200).json('Virksomheds brugerens jobopslag eller jobopslagene ikke opdateret');
                 }
             }
+            return res.status(200).json('Virksomheds brugeren er opdateret');
         }
+        
         return res.status(200).json('Virksomheds brugeren er opdateret');
     } else {
         return res.status(500).json('Kunne ikke opdatere virksomheds bruger');
