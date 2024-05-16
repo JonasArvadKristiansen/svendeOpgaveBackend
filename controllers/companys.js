@@ -249,9 +249,10 @@ const allCompanysJobpostings = (companyID) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', companyID, (err, result) => {
             if (err) {
-                reject(err);
+                console.error(err);
+                resolve({ success: false });
             } else {
-                resolve({ jobPostingsCount: result[0].count });
+                resolve({ success: true, jobPostingsCount: result[0].count });
             }
         });
     });
