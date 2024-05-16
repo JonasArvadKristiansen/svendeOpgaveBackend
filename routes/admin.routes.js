@@ -12,6 +12,16 @@ router.get('/allData', async (req, res) => {
     admin.allData(req, res);
 });
 
+router.get('/allBannedEmails', async (req, res) => {
+    let jwtVerify = await jwt.verifyToken(req);
+
+    if (jwtVerify.type != 'Admin') {
+        return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+    }
+
+    admin.getAllBannedEmails(req, res);
+});
+
 router.post('/banEmail', async (req, res) => {
     const { email } = req.body;
 
@@ -25,15 +35,20 @@ router.post('/banEmail', async (req, res) => {
         return res.status(401).json('Ikke tilladt at ban. Kun admin har tilladelse');
     }
 
-    let result = await admin.banEmail(email);
-    if (result.success) {
-        return res.status(200).json('Email kan længere bruges på siden');
+    let checkEmail = await admin.bannedEmailCheck(email);
+    if (checkEmail.success) {
+        let result = await admin.banEmail(email);
+        if (result.success) {
+            return res.status(200).json('Email kan længere bruges på siden');
+        } else {
+            return res.status(500).json('Server fejl. Kunne ikke forbyde email');
+        }
     } else {
-        return res.status(500).json('Server fejl. Kunne ikke forbyde email');
+        return res.status(409).json('Ban email eksitere allerede');
     }
 });
 
-router.delete('/adminDeleteUser', async (req, res) => {
+router.delete('/deleteUser', async (req, res) => {
     const { userId } = req.body;
 
     if (!userId) {
@@ -55,7 +70,7 @@ router.delete('/adminDeleteUser', async (req, res) => {
     }
 });
 
-router.delete('/adminDeleteCompany', async (req, res) => {
+router.delete('/deleteCompany', async (req, res) => {
     const { companyId } = req.body;
 
     if (!companyId) {

@@ -66,7 +66,7 @@ passport.use(
     )
 );
 
-router.get('/getUserInfo', async (req, res) => {
+router.get('/info', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
     if (jwtVerify.success) {
@@ -76,7 +76,7 @@ router.get('/getUserInfo', async (req, res) => {
     }
 });
 
-router.post('/loginUser', loginLimit, async (req, res) => {
+router.post('/login', loginLimit, async (req, res) => {
     const { email, password } = req.body;
 
     if (!(email && password)) {
@@ -91,9 +91,9 @@ router.post('/loginUser', loginLimit, async (req, res) => {
     }
 });
 
-router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/auth/google/callback', passport.authenticate('google', { session: false }), function (req, res) {
+router.get('/login/google/callback', passport.authenticate('google', { session: false }), function (req, res) {
     if (!req.user) {
         return res.status(401).json({ message: 'Login for facebook failed' });
     }
@@ -102,10 +102,10 @@ router.get('/auth/google/callback', passport.authenticate('google', { session: f
 });
 
 // Endpoint for Facebook login
-router.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
+router.get('/login/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
 
 //Endpoint gets called here after users login to facebook
-router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), function (req, res) {
+router.get('/login/facebook/callback', passport.authenticate('facebook', { session: false }), function (req, res) {
     if (!req.user) {
         return res.status(401).json({ message: 'Login for facebook failed' });
     }
@@ -113,7 +113,7 @@ router.get('/auth/facebook/callback', passport.authenticate('facebook', { sessio
     jwt.createJWT(req.user, res);
 });
 
-router.post('/createUser', async (req, res, next) => {
+router.post('/create', async (req, res, next) => {
     //setting varibles
     const { fullName, password, repeatPassword, email, phonenumber } = req.body;
 
@@ -126,10 +126,10 @@ router.post('/createUser', async (req, res, next) => {
         return res.status(409).json('Adgangskode for kort');
     }
 
-    //checks if password contains one upper_case letter
+    //RegExp test checks if password contains one upper_case letter
     const containsUppercase = /[A-Z]/.test(password);
 
-    // Checks if the password contains at least one number
+    // RegExp test Checks if the password contains at least one number
     const containsNumber = /\d/.test(password);
 
     if (!containsUppercase || !containsNumber) {
@@ -150,7 +150,7 @@ router.post('/createUser', async (req, res, next) => {
 
     const bannedEmail = await users.bannedEmailCheck(email);
 
-    if (bannedEmail) {
+    if (bannedEmail.success) {
         return res.status(409).json('Email er ikke tiladt at bruge');
     }
 
@@ -158,7 +158,7 @@ router.post('/createUser', async (req, res, next) => {
     next();
 });
 
-router.post('/createUser', async (req, res) => {
+router.post('/create', async (req, res) => {
     let result = await users.createUser(req, res);
     if (result.success) {
         jwt.createJWT(result.user, res);
@@ -167,11 +167,9 @@ router.post('/createUser', async (req, res) => {
     }
 });
 
-router.post('/sendEmail', async (req, res) => {
+router.post('/sendEmail', async (req, res) => {});
 
-});
-
-router.put('/updateUser', async (req, res) => {
+router.put('/update', async (req, res) => {
     const { fullName, email, phonenumber } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
 
@@ -210,7 +208,7 @@ router.put('/updateUser', async (req, res) => {
     }
 });
 
-router.put('/updateUserPassword', async (req, res) => {
+router.put('/password', async (req, res) => {
     const { oldPassword, newPassword, repeatNewPassword } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
 
@@ -255,7 +253,7 @@ router.put('/updateUserPassword', async (req, res) => {
     }
 });
 
-router.delete('/deleteUser', async (req, res) => {
+router.delete('/delete', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
     if (!jwtVerify.success) {

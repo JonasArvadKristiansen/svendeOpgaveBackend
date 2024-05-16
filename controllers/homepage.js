@@ -20,7 +20,7 @@ const allCompanys = (req, res) => {
                 console.error(err);
                 return res.status(500).json('server ikke aktiv');
             } else {
-                res.status(200).json({companys: data, pageCount });
+                res.status(200).json({ companys: data, pages: pageCount });
             }
         });
     });
@@ -41,15 +41,19 @@ const allJobpostings = (req, res) => {
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // query to fetch data for paginated page
-        db.query(`SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings 
-        INNER JOIN companys ON jobpostings.companyID = companys.id LIMIT 10 OFFSET ?`, [rowsToskip], (err, data) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json('server ikke aktiv');
-            } else {
-                res.status(200).json({ jobpostings: data, pageCount });
+        db.query(
+            `SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings 
+        INNER JOIN companys ON jobpostings.companyID = companys.id LIMIT 10 OFFSET ?`,
+            [rowsToskip],
+            (err, data) => {
+                if (err) {
+                    console.error(err);
+                    return res.status(500).json('server ikke aktiv');
+                } else {
+                    res.status(200).json({ jobpostings: data, pages: pageCount });
+                }
             }
-        });
+        );
     });
 };
 
@@ -64,7 +68,7 @@ const filterCompanys = (req, res) => {
 
     // if conditions checking if some or all query parameters are present
     if (req.query.jobtype) {
-        whereconditions.push('jobtype LIKE ?');
+        whereconditions.push('jobtypes LIKE ?');
         whereValues.push(`%${req.query.jobtype}%`);
     }
     if (req.query.search) {
@@ -74,7 +78,7 @@ const filterCompanys = (req, res) => {
 
     // adding the WHERE clause if there are conditions
     if (whereconditions.length > 0) {
-    counterQuery += ' WHERE ' + whereconditions.join(' AND ');
+        counterQuery += ' WHERE ' + whereconditions.join(' AND ');
     }
 
     // query to fetch number of rows with data
@@ -92,14 +96,14 @@ const filterCompanys = (req, res) => {
 
         // joining whereconditions on filterQuery
         if (whereconditions.length > 0) {
-        filterQuery += ' WHERE ' + whereconditions.join(' AND ');
+            filterQuery += ' WHERE ' + whereconditions.join(' AND ');
         }
-        
+
         // setting up how many rows to take and how many to skip before taking rows
         filterQuery += ' LIMIT 10 OFFSET ?';
 
-        // query to fetch data for paginated page
-        db.query(filterQuery, [whereValues, rowsToSkip], (err, data) => {
+        // query to fetch data for paginated page and ... spread operator is used to copy one a array to a new one
+        db.query(filterQuery, [...whereValues, rowsToSkip], (err, data) => {
             if (err) {
                 console.error(err);
                 return res.status(500).json('server ikke aktiv');
@@ -108,14 +112,14 @@ const filterCompanys = (req, res) => {
             }
         });
     });
-}
+};
 
 const filterJobpostings = (req, res) => {
     const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
     const rowsToSkip = (currentPageNumber - 1) * 10; //rows to skip
 
     // query to fetch number of rows with data
-    let counterQuery = 'SELECT COUNT(*) AS count FROM jobpostings';
+    let counterQuery = 'SELECT COUNT(*) AS count FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id';
     let whereconditions = [];
     let whereValues = [];
 
@@ -133,13 +137,13 @@ const filterJobpostings = (req, res) => {
         whereValues.push(`%${req.query.jobtype}%`);
     }
     if (req.query.search) {
-        whereconditions.push('(title LIKE ?)');
+        whereconditions.push('(companyName LIKE ?)');
         whereValues.push(`%${req.query.search}%`);
     }
 
     // adding the WHERE clause if there are conditions
     if (whereconditions.length > 0) {
-    counterQuery += ' WHERE ' + whereconditions.join(' AND ');
+        counterQuery += ' WHERE ' + whereconditions.join(' AND ');
     }
 
     // query to fetch number of rows with data
@@ -159,9 +163,9 @@ const filterJobpostings = (req, res) => {
 
         // adding the WHERE clause if there are conditions
         if (whereconditions.length > 0) {
-        filterQuery += ' WHERE ' + whereconditions.join(' AND ');
+            filterQuery += ' WHERE ' + whereconditions.join(' AND ');
         }
-        
+
         // adding order by clause based on newestJobpost
         if (req.query.newestJobpost) {
             if (req.query.newestJobpost === 'new') {
@@ -174,8 +178,8 @@ const filterJobpostings = (req, res) => {
         // setting up how many rows to take and how many to skip before taking rows
         filterQuery += ' LIMIT 10 OFFSET ?';
 
-        // query to fetch data for paginated page
-        db.query(filterQuery, [whereValues, rowsToSkip], (err, data) => {
+        // query to fetch data for paginated page and ... spread operator is used to copy one a array to a new one
+        db.query(filterQuery, [...whereValues, rowsToSkip], (err, data) => {
             if (err) {
                 console.error(err);
                 return res.status(500).json('server ikke aktiv');
@@ -186,13 +190,9 @@ const filterJobpostings = (req, res) => {
     });
 };
 
-
-
-
-
 const companyProfile = (req, res) => {
     const { companyID } = req.body;
-
+    //promise all makes it so that if all is success it will send the data to frontend, but if one fails it returns error
     Promise.all([
         new Promise((resolve, reject) => {
             db.query(
@@ -208,13 +208,17 @@ const companyProfile = (req, res) => {
             );
         }),
         new Promise((resolve, reject) => {
-            db.query('SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ?', [companyID], (err, data) => {
-                if (err) {
-                    console.error(err);
-                } else {
-                    resolve(data);
+            db.query(
+                'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ?',
+                [companyID],
+                (err, data) => {
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        resolve(data);
+                    }
                 }
-            });
+            );
         }),
     ])
         .then(([companyProfileData, jobpostingsData]) => {
@@ -227,17 +231,20 @@ const companyProfile = (req, res) => {
 };
 
 const jobposting = (req, res) => {
-    const {jobpostingId } = req.body;
+    const { jobpostingId } = req.body;
 
-    db.query('SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName, companys.companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?', 
-    [jobpostingId], (err, data) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json('server ikke aktiv');
-        } else {
-            return res.status(200).json({jobposting: data});
+    db.query(
+        'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName, companys.companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
+        [jobpostingId],
+        (err, data) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json('server ikke aktiv');
+            } else {
+                return res.status(200).json({ jobposting: data });
+            }
         }
-    });
+    );
 };
 
 module.exports = {

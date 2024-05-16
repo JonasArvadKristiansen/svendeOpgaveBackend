@@ -4,7 +4,7 @@ const jwt = require('../utils/jwt');
 const rateLimit = require('express-rate-limit');
 const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: 'Too many login attempts, please try again later.' } });
 
-router.get('/getCompanyInfo', async (req, res) => {
+router.get('/info', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
     if (jwtVerify.type != 'Company user') {
@@ -18,7 +18,7 @@ router.get('/getCompanyInfo', async (req, res) => {
     }
 });
 
-router.post('/loginCompanyUser', loginLimit, async (req, res) => {
+router.post('/login', loginLimit, async (req, res) => {
     const { email, password } = req.body;
 
     if (!(email && password)) {
@@ -33,13 +33,27 @@ router.post('/loginCompanyUser', loginLimit, async (req, res) => {
     }
 });
 
-router.post('/createCompanyUser', async (req, res, next) => {
+router.post('/create', async (req, res, next) => {
     //setting varibles
     const { companyName, password, repeatPassword, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } =
         req.body;
 
     //checking if fields are empty
-    if (!(companyName && password && repeatPassword && companyDescription && address && city && phonenumber && email && numberOfEmployees && cvrNumber && jobtypes)) {
+    if (
+        !(
+            companyName &&
+            password &&
+            repeatPassword &&
+            companyDescription &&
+            address &&
+            city &&
+            phonenumber &&
+            email &&
+            numberOfEmployees &&
+            cvrNumber &&
+            jobtypes
+        )
+    ) {
         return res.status(400).send('Mangler felter udfyldt');
     }
 
@@ -79,7 +93,7 @@ router.post('/createCompanyUser', async (req, res, next) => {
     next();
 });
 
-router.post('/createCompanyUser', async (req, res) => {
+router.post('/create', async (req, res) => {
     let resultOfCreateCompany = await companys.createCompanyUser(req, res);
 
     if (resultOfCreateCompany.success) {
@@ -89,10 +103,10 @@ router.post('/createCompanyUser', async (req, res) => {
     }
 });
 
-router.put('/updateCompanyUser', async (req, res) => {
+router.put('/update', async (req, res) => {
     const { companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
-    
+
     if (jwtVerify.type != 'Company user') {
         return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan ændre profil her');
     }
@@ -134,14 +148,14 @@ router.put('/updateCompanyUser', async (req, res) => {
             }
             return res.status(200).json('Virksomheds brugeren er opdateret');
         }
-        
+
         return res.status(200).json('Virksomheds brugeren er opdateret');
     } else {
         return res.status(500).json('Kunne ikke opdatere virksomheds bruger');
     }
 });
 
-router.put('/updatePasswordCompanyUser', async (req, res) => {
+router.put('/password', async (req, res) => {
     const { oldPassword, newPassword, repeatNewPassword } = req.body;
     const jwtVerify = await jwt.verifyToken(req);
 
@@ -186,7 +200,7 @@ router.put('/updatePasswordCompanyUser', async (req, res) => {
     }
 });
 
-router.delete('/deleteCompanyUser', async (req, res) => {
+router.delete('/delete', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
     if (jwtVerify.type != 'Company user') {

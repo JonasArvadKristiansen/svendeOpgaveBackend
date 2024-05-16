@@ -74,6 +74,7 @@ const createCompanyUser = (req) => {
     });
 };
 
+//checking if email is banned from use
 const bannedEmailCheck = (email) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM bannedemails WHERE email = ?', email, (err, data) => {
@@ -87,6 +88,7 @@ const bannedEmailCheck = (email) => {
     });
 };
 
+//checking if any company user with that email exists
 const companyUserExist = (email) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
@@ -100,6 +102,7 @@ const companyUserExist = (email) => {
     });
 };
 
+// checking if typed oldPassword is right
 const checkSentPassword = (password, companyID) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM companys WHERE id = ?', companyID, (err, data) => {
@@ -118,6 +121,7 @@ const checkSentPassword = (password, companyID) => {
     });
 };
 
+// for checking if a company owns any jobposts
 const allCompanysJobpostings = (companyID) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', companyID, (err, result) => {
@@ -130,6 +134,7 @@ const allCompanysJobpostings = (companyID) => {
     });
 };
 
+// for updating a company user's information
 const updateCompany = (req, companyID) => {
     let updateQuery = 'UPDATE companys SET ';
 
@@ -200,6 +205,7 @@ const updateCompany = (req, companyID) => {
     });
 };
 
+// for updating jobposts related to the company user
 const updateJobpostes = (companyID, req) => {
     let updateQuery = 'UPDATE jobpostings SET ';
 
@@ -239,6 +245,7 @@ const updateJobpostes = (companyID, req) => {
     });
 };
 
+// for updating a company user's password
 const updateCompanyPassword = (req, userId) => {
     const { newPassword } = req.body;
     const hashPassword = bcrypt.hashSync(newPassword, 10);
@@ -255,6 +262,7 @@ const updateCompanyPassword = (req, userId) => {
     });
 };
 
+// for deleting a company user
 const deleteCompanyUser = (companyID) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from companys WHERE id = ?', companyID, (err, result) => {

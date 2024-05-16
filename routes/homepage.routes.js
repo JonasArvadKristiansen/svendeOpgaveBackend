@@ -3,12 +3,18 @@ const homepage = require('../controllers/homepage');
 const jwt = require('../utils/jwt');
 
 router.get('/filterCompanys', async (req, res) => {
+    const { jobtype, search } = req.query;
+
+    if (!(jobtype || search)) {
+        return res.status(400).json('Mindst et filter skal være udfyldt');
+    }
+
     homepage.filterCompanys(req, res);
 });
 
 router.get('/filterJobpostings', async (req, res) => {
-    const { deadline, minSalary, jobtype, search} = req.query;
-    
+    const { deadline, minSalary, jobtype, search } = req.query;
+
     if (!(deadline || minSalary || jobtype || search)) {
         return res.status(400).json('Mindst et filter skal være udfyldt');
     }
@@ -25,7 +31,7 @@ router.get('/allJobpostings', async (req, res) => {
 });
 
 router.get('/jobposting', async (req, res) => {
-    const {jobpostingId } = req.body;
+    const { jobpostingId } = req.body;
 
     if (!jobpostingId) {
         return res.status(400).json('jobpostingId mangler');

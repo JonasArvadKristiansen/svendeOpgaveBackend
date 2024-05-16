@@ -1,5 +1,6 @@
 const db = require('../utils/DB');
 
+// for creating a jobpost
 const createJobposting = (req, companyID) => {
     const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
     return new Promise((resolve, reject) => {
@@ -25,6 +26,7 @@ const createJobposting = (req, companyID) => {
     });
 };
 
+// for updating a jobpost information
 const updateJobposting = (req) => {
     let updateQuery = 'UPDATE jobpostings SET ';
 
@@ -56,6 +58,7 @@ const updateJobposting = (req) => {
         valuesForQuery.push(req.body.salary);
     }
 
+    //joining updateQuery with conditions that needs to be updated
     updateQuery += fieldsForUpdates.join(', ');
     updateQuery += ' WHERE id = ?';
 
@@ -73,32 +76,35 @@ const updateJobposting = (req) => {
     });
 };
 
+// for updating a counter in a company user
 const plusCompanyJobpostingCount = (companyID) => {
     return new Promise((resolve, reject) => {
         db.query('UPDATE companys SET jobpostingCount = jobpostingCount + 1 WHERE id = ?', companyID, (err, result) => {
             if (err) {
                 console.error(err);
-                resolve({success: false});
+                resolve({ success: false });
             } else {
                 resolve({ success: true });
             }
         });
     });
-}
+};
 
+// for updating a counter in a company user
 const minusCompanyJobpostingCount = (companyID) => {
     return new Promise((resolve, reject) => {
         db.query('UPDATE companys SET jobpostingCount = jobpostingCount - 1 WHERE id = ?', companyID, (err, result) => {
             if (err) {
                 console.error(err);
-                resolve({success: false});
+                resolve({ success: false });
             } else {
                 resolve({ success: true });
             }
         });
     });
-}
+};
 
+// for deleting a jobpost
 const deleteJobposting = (jobpostingId) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from jobpostings WHERE id = ?', jobpostingId, (err, result) => {

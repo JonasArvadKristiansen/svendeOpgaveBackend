@@ -12,6 +12,7 @@ const getUserInfo = (userId, res) => {
     });
 };
 
+// for login a user
 const loginUser = (req) => {
     const { email, password } = req.body;
 
@@ -45,6 +46,7 @@ const loginUser = (req) => {
     });
 };
 
+// for creating a user
 const createUser = (req) => {
     const { fullName, password, email, phonenumber } = req.body;
 
@@ -72,6 +74,7 @@ const createUser = (req) => {
     });
 };
 
+//checking if email is banned from use
 const bannedEmailCheck = (email) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM bannedemails WHERE email = ?', email, (err, data) => {
@@ -79,12 +82,18 @@ const bannedEmailCheck = (email) => {
                 console.error(err);
                 resolve({ success: false });
             } else {
-                resolve(data.length > 0);
+                //checking if any emails is found
+                if (data.length > 0) {
+                    resolve({ success: true });
+                } else {
+                    resolve({ success: false });
+                }
             }
         });
     });
 };
 
+//checking if any user with that email exists
 const userExist = (email) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
@@ -98,6 +107,7 @@ const userExist = (email) => {
     });
 };
 
+// checking if typed oldPassword is right
 const checkSentPassword = (password, userId) => {
     return new Promise((resolve, reject) => {
         db.query('SELECT * FROM users WHERE id = ?', userId, (err, data) => {
@@ -116,6 +126,7 @@ const checkSentPassword = (password, userId) => {
     });
 };
 
+// for updating a user's information
 const updateUser = (req, userId) => {
     let updateQuery = 'UPDATE users SET ';
 
@@ -137,6 +148,7 @@ const updateUser = (req, userId) => {
         valuesForQuery.push(req.body.phonenumber);
     }
 
+    //joining updateQuery with conditions that needs to be updated
     updateQuery += fieldsForUpdates.join(', ');
     updateQuery += ' WHERE id = ?';
 
@@ -156,6 +168,7 @@ const updateUser = (req, userId) => {
     });
 };
 
+// for updating a user's password
 const updateUserPassword = (req, userId) => {
     let newPassword = req.body.newPassword;
     const hashPassword = bcrypt.hashSync(newPassword, 10);
@@ -174,6 +187,7 @@ const updateUserPassword = (req, userId) => {
     });
 };
 
+// for deleting a user
 const deleteUser = (userId) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from users WHERE id = ?', userId, (err, result) => {

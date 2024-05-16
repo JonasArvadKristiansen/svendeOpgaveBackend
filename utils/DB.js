@@ -9,7 +9,7 @@ const con = mysql.createPool({
     connectionLimit: `${process.env.CONNECTIONLIMIT}`,
 });
 
-//listing for new connection
+//listing for new connections
 con.on('connection', function (connection) {
     console.log('DB Connection established');
 

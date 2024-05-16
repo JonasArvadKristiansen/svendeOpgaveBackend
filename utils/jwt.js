@@ -1,8 +1,9 @@
 const jsonwebtoken = require('jsonwebtoken');
 require('dotenv').config();
 
-//creating token for a user
+// creating token for a user
 function createJWT(user, res) {
+    // signing jwt
     const accessToken = jsonwebtoken.sign({ user: user }, process.env.TOKEN_SECRET, { expiresIn: 60 * 60 });
     if (accessToken) {
         return res.status(200).json({ token: accessToken });
@@ -11,7 +12,7 @@ function createJWT(user, res) {
     }
 }
 
-//tjekking if user token is vaild
+// tjekking if user token is vaild
 function verifyToken(req) {
     return new Promise((resolve, reject) => {
         const authHeader = req.headers['authorization'];

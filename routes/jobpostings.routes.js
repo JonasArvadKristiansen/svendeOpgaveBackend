@@ -2,7 +2,7 @@ const router = require('express').Router();
 const jobpostings = require('../controllers/jobposting');
 const jwt = require('../utils/jwt');
 
-router.post('/createJobposting', async (req, res) => {
+router.post('/create', async (req, res) => {
     const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
 
     if (!(title && DESCRIPTION && deadline && jobtype && salary)) {
@@ -18,9 +18,9 @@ router.post('/createJobposting', async (req, res) => {
     let result = await jobpostings.createJobposting(req, jwtVerify.userId);
 
     if (result.success) {
-        let jobposting = await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId)
-        if(jobposting.success) {
-            return res.status(200).json('Jobopslag oprettet');    
+        let jobposting = await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId);
+        if (jobposting.success) {
+            return res.status(200).json('Jobopslag oprettet');
         } else {
             return res.status(200).json('Jobopslag oprettet, men kunne ikke opdatere virksomheds bruger jobopslag tæller');
         }
@@ -29,7 +29,7 @@ router.post('/createJobposting', async (req, res) => {
     }
 });
 
-router.put('/updateJobposting', async (req, res) => {
+router.put('/update', async (req, res) => {
     const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
 
     if (!jobpostingId) {
@@ -59,7 +59,7 @@ router.put('/updateJobposting', async (req, res) => {
     }
 });
 
-router.delete('/deleteJobposting', async (req, res) => {
+router.delete('/delete', async (req, res) => {
     const { jobpostingId } = req.body;
 
     if (!jobpostingId) {
@@ -79,9 +79,9 @@ router.delete('/deleteJobposting', async (req, res) => {
     let result = await jobpostings.deleteJobposting(jobpostingId);
 
     if (result.success) {
-        let jobposting = await jobpostings.minusCompanyJobpostingCount(jwtVerify.userId)
-        if(jobposting.success) {
-            return res.status(200).json('Jobopslag slettet');    
+        let jobposting = await jobpostings.minusCompanyJobpostingCount(jwtVerify.userId);
+        if (jobposting.success) {
+            return res.status(200).json('Jobopslag slettet');
         } else {
             return res.status(200).json('Jobopslag slettet, men kunne ikke opdatere virksomheds brugers jobopslag tæller');
         }
