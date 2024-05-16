@@ -2,7 +2,7 @@ const router = require('express').Router();
 const admin = require('../controllers/admin');
 const jwt = require('../utils/jwt');
 
-router.get('/allData', async (req, res) => {
+router.get('/statistikData', async (req, res) => {
     let jwtVerify = await jwt.verifyToken(req);
 
     if (jwtVerify.type != 'Admin') {

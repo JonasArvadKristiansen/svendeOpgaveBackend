@@ -2,6 +2,36 @@ const router = require('express').Router();
 const jobpostings = require('../controllers/jobposting');
 const jwt = require('../utils/jwt');
 
+router.get('/all', async (req, res) => {
+    jobpostings.allJobpostings(req, res);
+});
+
+router.get('/filter', async (req, res) => {
+    const { deadline, minSalary, jobtype, search } = req.query;
+
+    if (!(deadline || minSalary || jobtype || search)) {
+        return res.status(400).json('Mindst et filter skal være udfyldt');
+    }
+
+    jobpostings.filterJobpostings(req, res);
+});
+
+router.get('/info', async (req, res) => {
+    const { jobpostingId } = req.query;
+
+    if (!jobpostingId) {
+        return res.status(400).json('jobpostingId mangler');
+    }
+
+    const jwtVerify = await jwt.verifyToken(req);
+
+    if (!jwtVerify.success) {
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    }
+
+    jobpostings.jobposting(req, res);
+});
+
 router.post('/create', async (req, res) => {
     const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
 

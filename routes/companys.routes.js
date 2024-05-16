@@ -4,6 +4,36 @@ const jwt = require('../utils/jwt');
 const rateLimit = require('express-rate-limit');
 const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: 'Too many login attempts, please try again later.' } });
 
+router.get('/all', async (req, res) => {
+    companys.allCompanys(req, res);
+});
+
+router.get('/filter', async (req, res) => {
+    const { jobtype, search } = req.query;
+
+    if (!(jobtype || search)) {
+        return res.status(400).json('Mindst et filter skal være udfyldt');
+    }
+
+    companys.filterCompanys(req, res);
+});
+
+router.get('/profile', async (req, res) => {
+    const { companyID } = req.query;
+
+    if (!companyID) {
+        return res.status(400).json('companyID mangler');
+    }
+
+    const jwtVerify = await jwt.verifyToken(req);
+
+    if (!jwtVerify.success) {
+        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    }
+
+    companys.companyProfile(req, res);
+});
+
 router.get('/info', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 

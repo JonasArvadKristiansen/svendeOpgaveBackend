@@ -1,6 +1,129 @@
 const bcrypt = require('bcrypt');
 const db = require('../utils/DB');
 
+const allCompanys = (req, res) => {
+    const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
+    const rowsToskip = (currentPageNumber - 1) * 10; // rows to skip
+
+    // query to fetch number of pages with data
+    db.query('SELECT COUNT(*) AS count FROM companys', (err, countResult) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json('server ikke aktiv');
+        }
+
+        // counting number of pages
+        const pageCount = Math.ceil(countResult[0].count / 10);
+
+        // query to fetch data for paginated page
+        db.query('SELECT id, companyName, companyDescription, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [rowsToskip], (err, data) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json('server ikke aktiv');
+            } else {
+                res.status(200).json({ companys: data, pages: pageCount });
+            }
+        });
+    });
+};
+
+const filterCompanys = (req, res) => {
+    const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
+    const rowsToSkip = (currentPageNumber - 1) * 10; //rows to skip
+
+    // query to fetch number of rows with data
+    let counterQuery = 'SELECT COUNT(*) AS count FROM companys';
+    let whereconditions = [];
+    let whereValues = [];
+
+    // if conditions checking if some or all query parameters are present
+    if (req.query.jobtype) {
+        whereconditions.push('jobtypes LIKE ?');
+        whereValues.push(`%${req.query.jobtype}%`);
+    }
+    if (req.query.search) {
+        whereconditions.push('(companyName LIKE ?)');
+        whereValues.push(`%${req.query.search}%`);
+    }
+
+    // adding the WHERE clause if there are conditions
+    if (whereconditions.length > 0) {
+        counterQuery += ' WHERE ' + whereconditions.join(' AND ');
+    }
+
+    // query to fetch number of rows with data
+    db.query(counterQuery, whereValues, (err, countResult) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json('server ikke aktiv');
+        }
+
+        // counting number of pages
+        const pageCount = Math.ceil(countResult[0].count / 10);
+
+        // select query for getting data
+        let filterQuery = `SELECT id, companyName, companyDescription, jobpostingCount FROM companys`;
+
+        // joining whereconditions on filterQuery
+        if (whereconditions.length > 0) {
+            filterQuery += ' WHERE ' + whereconditions.join(' AND ');
+        }
+
+        // setting up how many rows to take and how many to skip before taking rows
+        filterQuery += ' LIMIT 10 OFFSET ?';
+
+        // query to fetch data for paginated page and ... spread operator is used to copy one a array to a new one
+        db.query(filterQuery, [...whereValues, rowsToSkip], (err, data) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json('server ikke aktiv');
+            } else {
+                res.status(200).json({ companys: data, pages: pageCount, url: req.originalUrl });
+            }
+        });
+    });
+};
+
+const companyProfile = (req, res) => {
+    const { companyID } = req.body;
+    //promise all makes it so that if all is success it will send the data to frontend, but if one fails it returns error
+    Promise.all([
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
+                [companyID],
+                (err, data) => {
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        resolve(data);
+                    }
+                }
+            );
+        }),
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ?',
+                [companyID],
+                (err, data) => {
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        resolve(data);
+                    }
+                }
+            );
+        }),
+    ])
+        .then(([companyProfileData, jobpostingsData]) => {
+            return res.status(200).json({ companyProfileData: companyProfileData, jobpostingsData: jobpostingsData });
+        })
+        .catch((error) => {
+            console.error(error);
+            return res.status(500).json('Server fejl');
+        });
+};
+
 const getCompanyInfo = (companyId, res) => {
     db.query(
         'SELECT companyName ,companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber FROM companys WHERE id = ?',
@@ -279,6 +402,9 @@ const deleteCompanyUser = (companyID) => {
 };
 
 module.exports = {
+    allCompanys,
+    filterCompanys,
+    companyProfile,
     getCompanyInfo,
     loginCompanyUser,
     createCompanyUser,
