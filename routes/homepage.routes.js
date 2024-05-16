@@ -2,6 +2,20 @@ const router = require('express').Router();
 const homepage = require('../controllers/homepage');
 const jwt = require('../utils/jwt');
 
+router.get('/filterCompanys', async (req, res) => {
+    homepage.filterCompanys(req, res);
+});
+
+router.get('/filterJobpostings', async (req, res) => {
+    const { deadline, minSalary, jobtype, search} = req.query;
+    
+    if (!(deadline || minSalary || jobtype || search)) {
+        return res.status(400).json('Mindst et filter skal være udfyldt');
+    }
+
+    homepage.filterJobpostings(req, res);
+});
+
 router.get('/allCompanys', async (req, res) => {
     homepage.allCompanys(req, res);
 });
