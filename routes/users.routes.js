@@ -16,7 +16,7 @@ passport.use(
         {
             clientID: `${process.env.FACEBOOK_clientID}`, // key from facebook developer
             clientSecret: `${process.env.FACEBOOK_clientSecret}`, // key from facebook developer
-            callbackURL: 'http://localhost:3000/auth/facebook/callback', //part of offical documentation to call it this
+            callbackURL: 'http://localhost:3000/user/auth/facebook/callback', //part of offical documentation to call it this
             profileFields: ['displayName', 'email'], //values collected from facebook profile after success login
             enableProof: true, //sha256 hash of your accesstoken, using clientSecret for protection against outside attacks
         },
@@ -45,7 +45,7 @@ passport.use(
         {
             clientID: `${process.env.GOOGLE_clientID}`,
             clientSecret: `${process.env.GOOGLE_clientSecret}`,
-            callbackURL: 'http://localhost:3000/auth/google/callback',
+            callbackURL: 'http://localhost:3000/user/auth/google/callback',
         },
         function (accessToken, refreshToken, profile, callback) {
             if (!profile || !profile.emails || profile.emails.length === 0) {
@@ -96,21 +96,21 @@ router.post('/login', loginLimit, async (req, res) => {
     }
 });
 
-router.get('/login/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/login/google/callback', passport.authenticate('google', { session: false }), function (req, res) {
+router.get('/auth/google/callback', passport.authenticate('google', { session: false }), function (req, res) {
     if (!req.user) {
-        return res.status(401).json({ message: 'Login for facebook failed' });
+        return res.status(401).json({ message: 'Login for google failed' });
     }
     // If authentication succeeds, create JWT
     jwt.createJWT(req.user, res);
 });
 
 // Endpoint for Facebook login
-router.get('/login/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
+router.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
 
 //Endpoint gets called here after users login to facebook
-router.get('/login/facebook/callback', passport.authenticate('facebook', { session: false }), function (req, res) {
+router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), function (req, res) {
     if (!req.user) {
         return res.status(401).json({ message: 'Login for facebook failed' });
     }

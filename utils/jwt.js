@@ -4,6 +4,7 @@ require('dotenv').config();
 // creating token for a user
 function createJWT(user, res) {
     // signing jwt
+    console.log(user)
     const accessToken = jsonwebtoken.sign({ user: user }, process.env.TOKEN_SECRET, { expiresIn: 60 * 60 });
     if (accessToken) {
         return res.status(200).json({ token: accessToken });
