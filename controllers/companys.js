@@ -6,20 +6,20 @@ const allCompanys = (req, res) => {
     const rowsToskip = (currentPageNumber - 1) * 10; // rows to skip
 
     // query to fetch number of pages with data
-    db.query('SELECT COUNT(*) AS count FROM companys', (err, countResult) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json('server ikke aktiv');
+    db.query('SELECT COUNT(*) AS count FROM companys', (error, countResult) => {
+        if (error) {
+            console.error(error);
+            return res.status(500).json('Kunne ikke hente virksomhedes profiler');
         }
 
         // counting number of pages
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // query to fetch data for paginated page
-        db.query('SELECT id, companyName, companyDescription, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [rowsToskip], (err, data) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json('server ikke aktiv');
+        db.query('SELECT id, companyName, companyDescription, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [rowsToskip], (error, data) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json('Kunne ikke hente virksomheds profiler');
             } else {
                 res.status(200).json({ companys: data, pages: pageCount });
             }
@@ -73,10 +73,10 @@ const filterCompanys = (req, res) => {
         filterQuery += ' LIMIT 10 OFFSET ?';
 
         // query to fetch data for paginated page and ... spread operator is used to copy one a array to a new one
-        db.query(filterQuery, [...whereValues, rowsToSkip], (err, data) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json('server ikke aktiv');
+        db.query(filterQuery, [...whereValues, rowsToSkip], (error, data) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json('Kunne ikke flitrere virksomheds profiler');
             } else {
                 res.status(200).json({ companys: data, pages: pageCount, url: req.originalUrl });
             }
@@ -84,17 +84,17 @@ const filterCompanys = (req, res) => {
     });
 };
 
-const companyProfile = (req, res) => {
-    const { companyID } = req.body;
+const profile = (req, res) => {
+    const { companyID } = req.query;
     //promise all makes it so that if all is success it will send the data to frontend, but if one fails it returns error
     Promise.all([
         new Promise((resolve, reject) => {
             db.query(
                 'SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
                 [companyID],
-                (err, data) => {
-                    if (err) {
-                        console.error(err);
+                (error, data) => {
+                    if (error) {
+                        reject(error)
                     } else {
                         resolve(data);
                     }
@@ -105,9 +105,9 @@ const companyProfile = (req, res) => {
             db.query(
                 'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ?',
                 [companyID],
-                (err, data) => {
-                    if (err) {
-                        console.error(err);
+                (error, data) => {
+                    if (error) {
+                        reject(error)
                     } else {
                         resolve(data);
                     }
@@ -120,7 +120,7 @@ const companyProfile = (req, res) => {
         })
         .catch((error) => {
             console.error(error);
-            return res.status(500).json('Server fejl');
+            return res.status(500).json('Kunne ikke virksomheds brugers profil');
         });
 };
 
@@ -128,10 +128,10 @@ const getCompanyInfo = (companyId, res) => {
     db.query(
         'SELECT companyName ,companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber FROM companys WHERE id = ?',
         companyId,
-        (err, data) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json('SQL fejl');
+        (error, data) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json('Kunne ikke hente virksomheds bruger');
             } else {
                 return res.status(200).json(data);
             }
@@ -139,41 +139,34 @@ const getCompanyInfo = (companyId, res) => {
     );
 };
 
-const loginCompanyUser = (req) => {
+const login = (req) => {
     const { email, password } = req.body;
 
-    //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
-    return new Promise((resolve) => {
-        db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+    // had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
+    return new Promise((resolve, reject) => {
+        db.query('SELECT * FROM companys WHERE email = ?', email, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke logge virksomheds brugeren ind' });
             } else if (data.length > 0) {
                 // tjekking if typed password match hashed password from database
                 let passwordhashed = bcrypt.compareSync(password, data[0].password);
 
-                //passwordhashed return true if they match
+                // passwordhashed return true if they match
                 if (passwordhashed) {
-                    db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
-                        if (err) {
-                            console.error(err);
-                            resolve({ success: false });
-                        } else if (data.length > 0) {
-                            const createdUser = { id: data[0].id, type: 'Company user' };
-                            resolve({ success: true, companyUser: createdUser });
-                        }
-                    });
+                    const createdUser = { id: data[0].id, type: 'Company user' };
+                    resolve({companyUser: createdUser });
                 } else {
-                    resolve({ success: false });
+                    reject({errorMessage: 'Adgangskode forkert'});
                 }
             } else {
-                resolve({ success: false });
+                reject({errorMessage: 'Ingen bruger fundet'});
             }
         });
     });
 };
 
-const createCompanyUser = (req) => {
+//creating company user
+const create = (req) => {
     const { companyName, password, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
 
     //hashing password user typed
@@ -184,13 +177,12 @@ const createCompanyUser = (req) => {
         db.query(
             'INSERT INTO companys (companyName ,password, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes, jobpostingCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [companyName, hashPassword, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes.join(','), 0],
-            (err, result) => {
-                if (err) {
-                    console.error(err);
-                    resolve({ success: false });
+            (error, result) => {
+                if (error) {
+                    reject({ error: error, errorMessage: 'Kunne ikke lave ny virksomheds bruger' });
                 } else {
                     let createdUser = { id: result.insertId, type: 'Company user' };
-                    resolve({ success: true, companyUser: createdUser, CompanyId: result.insertId, jobtypesData: jobtypes });
+                    resolve({companyUser: createdUser, CompanyId: result.insertId, jobtypesData: jobtypes });
                 }
             }
         );
@@ -200,10 +192,9 @@ const createCompanyUser = (req) => {
 //checking if email is banned from use
 const bannedEmailCheck = (email) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM bannedemails WHERE email = ?', email, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT * FROM bannedemails WHERE email = ?', email, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke hente ban emails' });
             } else {
                 resolve(data.length > 0);
             }
@@ -212,12 +203,13 @@ const bannedEmailCheck = (email) => {
 };
 
 //checking if any company user with that email exists
-const companyUserExist = (email) => {
+const companyExist = (email, userId) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM companys WHERE email = ?', email, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT * FROM companys WHERE email = ?', email, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke tjekke virksomheds brugere igennem efter email' });
+            } else if(data.length > 0 && data[0].id == userId) {
+                reject({ error: error, errorMessage: 'Virksomheds brugeren bruger allerede denne email' });
             } else {
                 resolve(data.length > 0);
             }
@@ -228,16 +220,15 @@ const companyUserExist = (email) => {
 // checking if typed oldPassword is right
 const checkSentPassword = (password, companyID) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM companys WHERE id = ?', companyID, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT * FROM companys WHERE id = ?', companyID, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke hente gamle adgangskode' });
             } else {
                 let passwordhashed = bcrypt.compareSync(password, data[0].password);
                 if (passwordhashed && data.length > 0) {
-                    resolve({ success: true });
+                    resolve(true)
                 } else {
-                    resolve({ success: false });
+                    reject({ errorMessage: 'Gamle adgangskode forkert' });
                 }
             }
         });
@@ -247,12 +238,11 @@ const checkSentPassword = (password, companyID) => {
 // for checking if a company owns any jobposts
 const allCompanysJobpostings = (companyID) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', companyID, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', companyID, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke hente virksomheds brugers opslag' });
             } else {
-                resolve({ success: true, jobPostingsCount: result[0].count });
+                resolve({jobPostingsCount: result[0].count });
             }
         });
     });
@@ -316,14 +306,13 @@ const updateCompany = (req, companyID) => {
     valuesForQuery.push(companyID);
 
     return new Promise((resolve, reject) => {
-        db.query(updateQuery, valuesForQuery, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query(updateQuery, valuesForQuery, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke opdatere virksomheds bruger' });
             } else if (result.affectedRows == 0) {
-                resolve({ success: false });
+                reject({ error: error, errorMessage: 'Kunne ikke opdatere virksomheds bruger' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
@@ -357,30 +346,29 @@ const updateJobpostes = (companyID, req) => {
     valuesForQuery.push(companyID);
 
     return new Promise((resolve, reject) => {
-        db.query(updateQuery, valuesForQuery, (err, result) => {
-            if (err) {
-                resolve({ success: false });
+        db.query(updateQuery, valuesForQuery, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke opdatere jobopslag for virksomheds bruger' });
             } else if (result.affectedRows == 0) {
-                resolve({ success: false });
+                reject({ error: error, errorMessage: 'Kunne ikke opdatere jobopslag for virksomheds bruger' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
 };
 
 // for updating a company user's password
-const updateCompanyPassword = (req, userId) => {
+const updatePassword = (req, userId) => {
     const { newPassword } = req.body;
     const hashPassword = bcrypt.hashSync(newPassword, 10);
 
     return new Promise((resolve, reject) => {
-        db.query('UPDATE companys SET password = ? WHERE id = ?', [hashPassword, userId], (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('UPDATE companys SET password = ? WHERE id = ?', [hashPassword, userId], (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke opdatere adgangskoden' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
@@ -389,12 +377,11 @@ const updateCompanyPassword = (req, userId) => {
 // for deleting a company user
 const deleteCompanyUser = (companyID) => {
     return new Promise((resolve, reject) => {
-        db.query('DELETE from companys WHERE id = ?', companyID, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('DELETE from companys WHERE id = ?', companyID, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke slette virksomheds bruger' });
             } else if (result.affectedRows == 0) {
-                resolve({ success: false });
+                reject({ error: error, errorMessage: 'Kunne ikke slette virksomheds bruger' });
             } else {
                 resolve({ success: true });
             }
@@ -405,16 +392,16 @@ const deleteCompanyUser = (companyID) => {
 module.exports = {
     allCompanys,
     filterCompanys,
-    companyProfile,
+    profile,
     getCompanyInfo,
-    loginCompanyUser,
-    createCompanyUser,
+    login,
+    create,
     bannedEmailCheck,
-    companyUserExist,
+    companyExist,
     checkSentPassword,
     allCompanysJobpostings,
     updateCompany,
     updateJobpostes,
-    updateCompanyPassword,
+    updatePassword,
     deleteCompanyUser,
 };

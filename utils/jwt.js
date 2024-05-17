@@ -8,7 +8,7 @@ function createJWT(user, res) {
     if (accessToken) {
         return res.status(200).json({ token: accessToken });
     } else {
-        return res.status(500).json({ message: 'Token could not be created' });
+        return res.status(500).json({ message: 'token kunne ikke laves' });
     }
 }
 
@@ -19,15 +19,15 @@ function verifyToken(req) {
         if (authHeader) {
             // Extract and verify token
             const token = authHeader.split(' ')[1]; // Removing 'Bearer' prefix
-            jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (err, decodedToken) => {
-                if (err) {
-                    resolve({ success: false }); // Token verification failed
+            jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (error, decodedToken) => {
+                if (error) {
+                    reject({ errorMessage: 'Fejl i at godkende token' });
                 } else {
-                    resolve({ success: true, userId: decodedToken.user.id, type: decodedToken.user.type }); // Token verification succeeded
+                    resolve({userId: decodedToken.user.id, type: decodedToken.user.type }); // Token verification succeeded
                 }
             });
         } else {
-            resolve({ success: false }); // No token
+            reject({ errorMessage: 'ingen token sent' }); // No token
         }
     });
 }
