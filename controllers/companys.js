@@ -55,7 +55,7 @@ const filterCompanys = (req, res) => {
     db.query(counterQuery, whereValues, (err, countResult) => {
         if (err) {
             console.error(err);
-            return res.status(500).json('server ikke aktiv');
+            return res.status(500).json('Kunne ikke flitrere virksomheds profiler');
         }
 
         // counting number of pages
