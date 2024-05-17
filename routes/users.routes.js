@@ -166,7 +166,7 @@ router.post('/create', async (req, res, next) => {
 router.post('/create', async (req, res) => {
     try {
         let result = await users.create(req, res);
-        if (result) {
+        if (result.success) {
             jwt.createJWT(result.user, res);
         } else {
             return res.status(500).json('Kunne ikke lave ny bruger');
