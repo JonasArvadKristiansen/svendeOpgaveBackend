@@ -5,9 +5,9 @@ const allJobpostings = (req, res) => {
     const rowsToskip = (currentPageNumber - 1) * 10; // rows to skip
 
     // query to fetch number of rows with data
-    db.query('SELECT COUNT(*) AS count FROM jobpostings', (err, countResult) => {
-        if (err) {
-            console.error(err);
+    db.query('SELECT COUNT(*) AS count FROM jobpostings', (error, countResult) => {
+        if (error) {
+            console.error(error);
             return res.status(500).json('server ikke aktiv');
         }
 
@@ -19,10 +19,10 @@ const allJobpostings = (req, res) => {
             `SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings 
         INNER JOIN companys ON jobpostings.companyID = companys.id LIMIT 10 OFFSET ?`,
             [rowsToskip],
-            (err, data) => {
-                if (err) {
-                    console.error(err);
-                    return res.status(500).json('server ikke aktiv');
+            (error, data) => {
+                if (error) {
+                    console.error(error);
+                    return res.status(500).json('Kunne ikke hente jobopslagene');
                 } else {
                     res.status(200).json({ jobpostings: data, pages: pageCount });
                 }
@@ -64,9 +64,9 @@ const filterJobpostings = (req, res) => {
     }
 
     // query to fetch number of rows with data
-    db.query(counterQuery, whereValues, (err, countResult) => {
-        if (err) {
-            console.error(err);
+    db.query(counterQuery, whereValues, (error, countResult) => {
+        if (error) {
+            console.error(error);
             return res.status(500).json('server ikke aktiv');
         }
 
@@ -96,10 +96,10 @@ const filterJobpostings = (req, res) => {
         filterQuery += ' LIMIT 10 OFFSET ?';
 
         // query to fetch data for paginated page and ... spread operator is used to copy one a array to a new one
-        db.query(filterQuery, [...whereValues, rowsToSkip], (err, data) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json('server ikke aktiv');
+        db.query(filterQuery, [...whereValues, rowsToSkip], (error, data) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json('Kunne ikke flitrere jobopslagene');
             } else {
                 res.status(200).json({ jobpostings: data, pages: pageCount, url: req.originalUrl });
             }
@@ -113,10 +113,10 @@ const jobposting = (req, res) => {
     db.query(
         'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName, companys.companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
         [jobpostingId],
-        (err, data) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json('server ikke aktiv');
+        (error, data) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json('Kunne ikke hente jobopslag');
             } else {
                 return res.status(200).json({ jobposting: data });
             }
@@ -128,20 +128,18 @@ const jobposting = (req, res) => {
 const createJobposting = (req, companyID) => {
     const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
     return new Promise((resolve, reject) => {
-        db.query('SELECT address, city, phonenumber, email FROM companys WHERE id = ?', companyID, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT address, city, phonenumber, email FROM companys WHERE id = ?', companyID, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke hente virksomheds brugeren' });
             } else {
                 db.query(
                     'INSERT INTO jobpostings (title, DESCRIPTION, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                     [title, DESCRIPTION, deadline, jobtype, companyID, data[0].address, data[0].city, data[0].phonenumber, data[0].email, salary],
-                    (err, data) => {
-                        if (err) {
-                            console.error(err);
-                            resolve({ success: false });
+                    (error, data) => {
+                        if (error) {
+                            reject({ error: error, errorMessage: 'Kunne ikke oprette jobopslag' });
                         } else {
-                            resolve({ success: true });
+                            resolve(true);
                         }
                     }
                 );
@@ -189,12 +187,11 @@ const updateJobposting = (req) => {
     valuesForQuery.push(req.body.jobpostingId);
 
     return new Promise((resolve, reject) => {
-        db.query(updateQuery, valuesForQuery, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query(updateQuery, valuesForQuery, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'kunne ikke opdatere jobopslag' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
@@ -203,12 +200,11 @@ const updateJobposting = (req) => {
 // for updating a counter in a company user
 const plusCompanyJobpostingCount = (companyID) => {
     return new Promise((resolve, reject) => {
-        db.query('UPDATE companys SET jobpostingCount = jobpostingCount + 1 WHERE id = ?', companyID, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('UPDATE companys SET jobpostingCount = jobpostingCount + 1 WHERE id = ?', companyID, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'kunne ikke opdatere virksomheds brugerens jobopslag tæller' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
@@ -217,12 +213,11 @@ const plusCompanyJobpostingCount = (companyID) => {
 // for updating a counter in a company user
 const minusCompanyJobpostingCount = (companyID) => {
     return new Promise((resolve, reject) => {
-        db.query('UPDATE companys SET jobpostingCount = jobpostingCount - 1 WHERE id = ?', companyID, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('UPDATE companys SET jobpostingCount = jobpostingCount - 1 WHERE id = ?', companyID, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'kunne ikke opdatere virksomheds brugerens jobopslag tæller' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
@@ -231,12 +226,11 @@ const minusCompanyJobpostingCount = (companyID) => {
 // for deleting a jobpost
 const deleteJobposting = (jobpostingId) => {
     return new Promise((resolve, reject) => {
-        db.query('DELETE from jobpostings WHERE id = ?', jobpostingId, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('DELETE from jobpostings WHERE id = ?', jobpostingId, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'kunne ikke slette jobopslag' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });

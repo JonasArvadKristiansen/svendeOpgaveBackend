@@ -25,98 +25,103 @@ router.get('/info', async (req, res) => {
 
     const jwtVerify = await jwt.verifyToken(req);
 
-    if (!jwtVerify.success) {
-        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    if (jwtVerify) {
+        jobpostings.jobposting(req, res);
     }
-
-    jobpostings.jobposting(req, res);
 });
 
 router.post('/create', async (req, res) => {
-    const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
+    try {
+        const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
 
-    if (!(title && DESCRIPTION && deadline && jobtype && salary)) {
-        return res.status(400).json('Mangler felter udfyldt');
-    }
-
-    let jwtVerify = await jwt.verifyToken(req);
-
-    if (jwtVerify.type != 'Company user') {
-        return res.status(401).json('Ikke tilladt at lave jobopslag. skift til virksomheds bruger for at oprette opslag');
-    }
-
-    let result = await jobpostings.createJobposting(req, jwtVerify.userId);
-
-    if (result.success) {
-        let jobposting = await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId);
-        if (jobposting.success) {
-            return res.status(200).json('Jobopslag oprettet');
-        } else {
-            return res.status(200).json('Jobopslag oprettet, men kunne ikke opdatere virksomheds bruger jobopslag tæller');
+        if (!(title && DESCRIPTION && deadline && jobtype && salary)) {
+            return res.status(400).json('Mangler felter udfyldt');
         }
-    } else {
-        return res.status(500).json('Jobopslag kunne ikke oprettes');
+
+        let jwtVerify = await jwt.verifyToken(req);
+
+        if (jwtVerify.type != 'Company user') {
+            return res.status(401).json('Ikke tilladt at lave jobopslag. skift til virksomheds bruger for at oprette opslag');
+        }
+
+        let result = await jobpostings.createJobposting(req, jwtVerify.userId);
+
+        if (result) {
+            let jobposting = await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId);
+            if (jobposting) {
+                return res.status(200).json('Jobopslag oprettet');
+            } else {
+                return res.status(200).json('Jobopslag oprettet, men kunne ikke opdatere virksomheds brugerens jobopslag tæller');
+            }
+        } else {
+            return res.status(500).json('Jobopslag kunne ikke oprettes');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
 router.put('/update', async (req, res) => {
-    const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
+    try {
+        const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
 
-    if (!jobpostingId) {
-        return res.status(400).json('Mangler jobpostingId udfyldt');
-    }
+        if (!jobpostingId) {
+            return res.status(400).json('Mangler jobpostingId udfyldt');
+        }
 
-    const jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-    if (!jwtVerify.success) {
-        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-    }
+        if (jwtVerify.type != 'Company user') {
+            return res.status(401).json('Ikke tilladt, kun Virksomheds brugers kan ændre opslag');
+        }
 
-    if (jwtVerify.type != 'Company user') {
-        return res.status(401).json('Ikke tilladt, kun Virksomheds brugers kan ændre opslag');
-    }
+        if (!(title || DESCRIPTION || deadline || jobtype || salary)) {
+            return res.status(400).json('Mindst et felt skal være udfyldt');
+        }
 
-    if (!(title || DESCRIPTION || deadline || jobtype || salary)) {
-        return res.status(400).json('Mindst et felt skal være udfyldt');
-    }
+        let result = await jobpostings.updateJobposting(req);
 
-    let result = await jobpostings.updateJobposting(req);
-
-    if (result.success) {
-        return res.status(200).json('Jobopslag opdateret');
-    } else {
-        return res.status(500).json('Kunne ikke opdatere jobopslag');
+        if (result) {
+            return res.status(200).json('Jobopslag opdateret');
+        } else {
+            return res.status(500).json('Kunne ikke opdatere jobopslag');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
 router.delete('/delete', async (req, res) => {
-    const { jobpostingId } = req.body;
+    try {
+        const { jobpostingId } = req.body;
 
-    if (!jobpostingId) {
-        return res.status(400).json('Mangler jobpostingId udfyldt');
-    }
-
-    let jwtVerify = await jwt.verifyToken(req);
-
-    if (!jwtVerify.success) {
-        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-    }
-
-    if (jwtVerify.type != 'Company user') {
-        return res.status(401).json('Ikke tilladt, kun Virksomheds brugers kan slette opslag');
-    }
-
-    let result = await jobpostings.deleteJobposting(jobpostingId);
-
-    if (result.success) {
-        let jobposting = await jobpostings.minusCompanyJobpostingCount(jwtVerify.userId);
-        if (jobposting.success) {
-            return res.status(200).json('Jobopslag slettet');
-        } else {
-            return res.status(200).json('Jobopslag slettet, men kunne ikke opdatere virksomheds brugers jobopslag tæller');
+        if (!jobpostingId) {
+            return res.status(400).json('Mangler jobpostingId udfyldt');
         }
-    } else {
-        return res.status(500).json('Jobopslag kunne ikke slettes');
+
+        let jwtVerify = await jwt.verifyToken(req);
+
+        if (jwtVerify.type != 'Company user') {
+            return res.status(401).json('Ikke tilladt, kun Virksomheds brugers kan slette opslag');
+        }
+
+        let result = await jobpostings.deleteJobposting(jobpostingId);
+
+        if (result) {
+            let jobposting = await jobpostings.minusCompanyJobpostingCount(jwtVerify.userId);
+            if (jobposting) {
+                return res.status(200).json('Jobopslag slettet');
+            } else {
+                return res.status(200).json('Jobopslag slettet, men kunne ikke opdatere virksomheds brugers jobopslag tæller');
+            }
+        } else {
+            return res.status(500).json('Jobopslag kunne ikke slettes');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
