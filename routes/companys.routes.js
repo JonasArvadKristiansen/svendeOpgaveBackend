@@ -60,7 +60,7 @@ router.post('/login', loginLimit, async (req, res) => {
             return res.status(400).send('Mangler felter udfyldt');
         }
         const response = await companys.login(req, res);
-        if (response) {
+        if (response.success) {
             jwt.createJWT(response.companyUser, res);
         } else {
             return res.status(404).json('Kunne ikke logge virksomheds brugeren ind');
@@ -165,9 +165,9 @@ router.put('/update', async (req, res) => {
         }
 
         if (email) {
-            const userExist = await companys.companyExist(email, jwtVerify.userId);
+            const companyExist = await companys.companyExist(email, jwtVerify.userId);
 
-            if (userExist) {
+            if (!companyExist) {
                 return res.status(409).json('Email allerede i brug');
             }
 

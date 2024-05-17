@@ -1,11 +1,11 @@
 const bcrypt = require('bcrypt');
 const db = require('../utils/DB');
 
-const getUserInfo = (userId, res) => {
-    db.query('SELECT fullName ,email, phonenumber FROM users WHERE id = ?', userId, (err, data) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json('SQL fejl');
+const getInfo = (userId, res) => {
+    db.query('SELECT fullName ,email, phonenumber FROM users WHERE id = ?', userId, (error, data) => {
+        if (error) {
+            console.error(error);
+            return res.status(500).json('Kunne ikke hente bruger profil');
         } else {
             return res.status(200).json(data);
         }
@@ -13,15 +13,14 @@ const getUserInfo = (userId, res) => {
 };
 
 // for login a user
-const loginUser = (req) => {
+const login = (req) => {
     const { email, password } = req.body;
 
     //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT * FROM users WHERE email = ?', email, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke logge brugeren ind' });
             } else if (data.length > 0) {
                 // tjekking if typed password match hashed password from database
                 let passwordhashed = bcrypt.compareSync(password, data[0].password);
@@ -37,17 +36,17 @@ const loginUser = (req) => {
                     }
                     resolve({ success: true, user: createdUser });
                 } else {
-                    resolve({ success: false });
+                    reject({errorMessage: 'Adgangskode forkert'});
                 }
             } else {
-                resolve({ success: false });
+                reject({errorMessage: 'Ingen bruger fundet'});
             }
         });
     });
 };
 
 // for creating a user
-const createUser = (req) => {
+const create = (req) => {
     const { fullName, password, email, phonenumber } = req.body;
 
     //hashing password user typed
@@ -58,15 +57,11 @@ const createUser = (req) => {
         db.query(
             'INSERT INTO users (fullName ,email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)',
             [fullName, email, hashPassword, phonenumber, 0],
-            (err, data) => {
-                if (err) {
-                    console.error(err);
-                    resolve({ success: false });
-                } else if (data.affectedRows == 0) {
-                    resolve({ success: false });
+            (error, data) => {
+                if (error) {
+                    reject({ error: error, errorMessage: 'Kunne ikke lave ny bruger' });
                 } else {
                     let createdUser = { id: data.insertId, type: 'Normal user' };
-
                     resolve({ success: true, user: createdUser });
                 }
             }
@@ -77,29 +72,24 @@ const createUser = (req) => {
 //checking if email is banned from use
 const bannedEmailCheck = (email) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM bannedemails WHERE email = ?', email, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT * FROM bannedemails WHERE email = ?', email, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke hente ban emails' });
             } else {
-                //checking if any emails is found
-                if (data.length > 0) {
-                    resolve({ success: true });
-                } else {
-                    resolve({ success: false });
-                }
+                resolve(data.length > 0);
             }
         });
     });
 };
 
 //checking if any user with that email exists
-const userExist = (email) => {
+const userExist = (email, userId) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM users WHERE email = ?', email, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT * FROM users WHERE email = ?', email, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke tjekke brugere igennem efter email' });
+            } else if(data.length > 0 && data[0].id == userId) {
+                reject({ error: error, errorMessage: 'Brugeren bruger allerede denne email' });
             } else {
                 resolve(data.length > 0);
             }
@@ -108,18 +98,17 @@ const userExist = (email) => {
 };
 
 // checking if typed oldPassword is right
-const checkSentPassword = (password, userId) => {
+const checkSentPassword = (password, companyID) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM users WHERE id = ?', userId, (err, data) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query('SELECT * FROM users WHERE id = ?', companyID, (error, data) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke hente gamle adgangskode' });
             } else {
                 let passwordhashed = bcrypt.compareSync(password, data[0].password);
                 if (passwordhashed && data.length > 0) {
-                    resolve({ success: true });
+                    resolve(true)
                 } else {
-                    resolve({ success: false });
+                    reject({ errorMessage: 'Gamle adgangskode forkert' });
                 }
             }
         });
@@ -127,7 +116,7 @@ const checkSentPassword = (password, userId) => {
 };
 
 // for updating a user's information
-const updateUser = (req, userId) => {
+const update = (req, userId) => {
     let updateQuery = 'UPDATE users SET ';
 
     const fieldsForUpdates = [];
@@ -155,33 +144,29 @@ const updateUser = (req, userId) => {
     valuesForQuery.push(userId);
 
     return new Promise((resolve, reject) => {
-        db.query(updateQuery, valuesForQuery, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
+        db.query(updateQuery, valuesForQuery, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke opdatere bruger' });
             } else if (result.affectedRows == 0) {
-                resolve({ success: false });
+                reject({ error: error, errorMessage: 'Kunne ikke opdatere bruger' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
 };
 
 // for updating a user's password
-const updateUserPassword = (req, userId) => {
+const updatePassword = (req, userId) => {
     let newPassword = req.body.newPassword;
     const hashPassword = bcrypt.hashSync(newPassword, 10);
 
     return new Promise((resolve, reject) => {
-        db.query('UPDATE users SET password = ? WHERE id = ?', [hashPassword, userId], (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
-            } else if (result.affectedRows == 0) {
-                resolve({ success: false });
+        db.query('UPDATE users SET password = ? WHERE id = ?', [hashPassword, userId], (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke opdatere adgangskoden' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
@@ -190,27 +175,24 @@ const updateUserPassword = (req, userId) => {
 // for deleting a user
 const deleteUser = (userId) => {
     return new Promise((resolve, reject) => {
-        db.query('DELETE from users WHERE id = ?', userId, (err, result) => {
-            if (err) {
-                console.error(err);
-                resolve({ success: false });
-            } else if (result.affectedRows == 0) {
-                resolve({ success: false });
+        db.query('DELETE from users WHERE id = ?', userId, (error, result) => {
+            if (error) {
+                reject({ error: error, errorMessage: 'Kunne ikke slette virksomheds bruger' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });
 };
 
 module.exports = {
-    getUserInfo,
-    loginUser,
-    createUser,
+    getInfo,
+    login,
+    create,
     bannedEmailCheck,
     userExist,
     checkSentPassword,
-    updateUser,
-    updateUserPassword,
+    update,
+    updatePassword,
     deleteUser,
 };

@@ -154,7 +154,7 @@ const login = (req) => {
                 // passwordhashed return true if they match
                 if (passwordhashed) {
                     const createdUser = { id: data[0].id, type: 'Company user' };
-                    resolve({companyUser: createdUser });
+                    resolve({ success: true, companyUser: createdUser });
                 } else {
                     reject({errorMessage: 'Adgangskode forkert'});
                 }
@@ -380,10 +380,8 @@ const deleteCompanyUser = (companyID) => {
         db.query('DELETE from companys WHERE id = ?', companyID, (error, result) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke slette virksomheds bruger' });
-            } else if (result.affectedRows == 0) {
-                reject({ error: error, errorMessage: 'Kunne ikke slette virksomheds bruger' });
             } else {
-                resolve({ success: true });
+                resolve(true);
             }
         });
     });

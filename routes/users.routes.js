@@ -69,25 +69,30 @@ passport.use(
 router.get('/info', async (req, res) => {
     const jwtVerify = await jwt.verifyToken(req);
 
-    if (jwtVerify.success) {
-        users.getUserInfo(jwtVerify.userId, res);
+    if (jwtVerify) {
+        users.getInfo(jwtVerify.userId, res);
     } else {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
     }
 });
 
 router.post('/login', loginLimit, async (req, res) => {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    if (!(email && password)) {
-        return res.status(400).send('Mangler felter udfyldt');
-    }
+        if (!(email && password)) {
+            return res.status(400).send('Mangler felter udfyldt');
+        }
 
-    const response = await users.loginUser(req, res);
-    if (response.success) {
-        jwt.createJWT(response.user, res);
-    } else {
-        return res.status(404).json('Adgangskode eller email forkert. Tjek indtastet felter igen');
+        const response = await users.login(req, res);
+        if (response.success) {
+            jwt.createJWT(response.user, res);
+        } else {
+            return res.status(404).json('Adgangskode eller email forkert. Tjek indtastet felter igen');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
@@ -143,14 +148,14 @@ router.post('/create', async (req, res, next) => {
 
     //checks if user exists
     const userExist = await users.userExist(email);
-
+    
     if (userExist) {
         return res.status(409).json('Brugeren eksitere allerede');
     }
 
     const bannedEmail = await users.bannedEmailCheck(email);
 
-    if (bannedEmail.success) {
+    if (bannedEmail) {
         return res.status(409).json('Email er ikke tiladt at bruge');
     }
 
@@ -159,117 +164,129 @@ router.post('/create', async (req, res, next) => {
 });
 
 router.post('/create', async (req, res) => {
-    let result = await users.createUser(req, res);
-    if (result.success) {
-        jwt.createJWT(result.user, res);
-    } else {
-        return res.status(500).json('Kunne ikke lave ny bruger');
+    try {
+        let result = await users.create(req, res);
+        if (result) {
+            jwt.createJWT(result.user, res);
+        } else {
+            return res.status(500).json('Kunne ikke lave ny bruger');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
 router.post('/sendEmail', async (req, res) => {});
 
 router.put('/update', async (req, res) => {
-    const { fullName, email, phonenumber } = req.body;
-    const jwtVerify = await jwt.verifyToken(req);
+    try {
+        const { fullName, email, phonenumber } = req.body;
+        const jwtVerify = await jwt.verifyToken(req);
 
-    if (!jwtVerify.success) {
-        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-    }
-
-    if (jwtVerify.type != 'Normal user') {
-        return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
-    }
-
-    if (!(fullName || email || phonenumber)) {
-        return res.status(400).json('Mindst et felt skal være udfyldt');
-    }
-
-    if (email) {
-        const userExist = await users.userExist(email);
-
-        if (userExist) {
-            return res.status(409).json('Email allerede i brug');
+        if (jwtVerify.type != 'Normal user') {
+            return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
         }
 
-        const bannedEmail = await users.bannedEmailCheck(email);
-
-        if (bannedEmail) {
-            return res.status(409).json('Email er ikke tiladt at bruge');
+        if (!(fullName || email || phonenumber)) {
+            return res.status(400).json('Mindst et felt skal være udfyldt');
         }
-    }
 
-    let result = await users.updateUser(req, jwtVerify.userId);
+        if (email) {
+            const userExist = await users.userExist(email, jwtVerify.userId);
 
-    if (result.success) {
-        return res.status(200).json('Brugeren opdateret');
-    } else {
-        return res.status(500).json('Kunne ikke opdatere bruger');
+            if (userExist) {
+                return res.status(409).json('Email allerede i brug');
+            }
+
+            const bannedEmail = await users.bannedEmailCheck(email);
+
+            if (bannedEmail) {
+                return res.status(409).json('Email er ikke tiladt at bruge');
+            }
+        }
+
+        let result = await users.update(req, jwtVerify.userId);
+
+        if (result) {
+            return res.status(200).json('Brugeren opdateret');
+        } else {
+            return res.status(500).json('Kunne ikke opdatere bruger');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
 router.put('/password', async (req, res) => {
-    const { oldPassword, newPassword, repeatNewPassword } = req.body;
-    const jwtVerify = await jwt.verifyToken(req);
+    try {
+        const { oldPassword, newPassword, repeatNewPassword } = req.body;
+        const jwtVerify = await jwt.verifyToken(req);
 
-    if (!jwtVerify.success) {
-        res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-    }
+        if (jwtVerify.type != 'Normal user' && jwtVerify.type != 'Admin') {
+            return res.status(401).json('Ikke tilladt, kun jobsøgere og admin kan opdatere adgangskode her');
+        }
 
-    if (jwtVerify.type != 'Normal user' || jwtVerify.type != 'Admin') {
-        return res.status(401).json('Ikke tilladt, kun jobsøgere og admin kan opdatere adgangskode her');
-    }
+        if (!(oldPassword && newPassword && repeatNewPassword)) {
+            return res.status(400).json('Mangler felter udfyldt');
+        }
 
-    if (!(oldPassword && newPassword && repeatNewPassword)) {
-        return res.status(400).json('Mangler felter udfyldt');
-    }
+        const verifyOldPassword = await users.checkSentPassword(oldPassword, jwtVerify.userId);
 
-    const verifyOldPassword = await users.checkSentPassword(oldPassword, jwtVerify.userId);
+        if (!verifyOldPassword) {
+            return res.status(409).json('Gamle adgangskode ikke rigtig');
+        }
 
-    if (!verifyOldPassword.success) {
-        return res.status(409).json('Gamle adgangskode ikke rigtig');
-    }
+        if (newPassword != repeatNewPassword) {
+            return res.status(409).json('Nye Adgangskode felter ikke ens');
+        }
 
-    if (newPassword != repeatNewPassword) {
-        return res.status(409).json('Nye Adgangskode felter ikke ens');
-    }
+        //RegExp test checks if password contains one upper_case letter
+        const containsUppercase = /[A-Z]/.test(newPassword);
 
-    //RegExp test checks if password contains one upper_case letter
-    const containsUppercase = /[A-Z]/.test(newPassword);
+        // RegExp test Checks if the password contains at least one number
+        const containsNumber = /\d/.test(newPassword);
 
-    // RegExp test Checks if the password contains at least one number
-    const containsNumber = /\d/.test(newPassword);
+        if (!containsUppercase || !containsNumber) {
+            return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+        }
 
-    if (!containsUppercase || !containsNumber) {
-        return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
-    }
+        let result = await users.updatePassword(req, jwtVerify.userId);
 
-    let result = await users.updateUserPassword(req, jwtVerify.userId);
-
-    if (result.success) {
-        return res.status(200).json('Brugerens adgangskode opdateret');
-    } else {
-        return res.status(500).json('Kunnne ikke opdatere adgangskoden');
+        if (result) {
+            return res.status(200).json('Brugerens adgangskode opdateret');
+        } else {
+            return res.status(500).json('Kunnne ikke opdatere adgangskoden');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
 router.delete('/delete', async (req, res) => {
-    const jwtVerify = await jwt.verifyToken(req);
+    try {
+        const jwtVerify = await jwt.verifyToken(req);
 
-    if (!jwtVerify.success) {
-        res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-    }
+        if (!jwtVerify.success) {
+            res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+        }
 
-    if (jwtVerify.type != 'Normal user') {
-        return res.status(401).json('Ikke tilladt, kun jobsøgere kan slette profil her');
-    }
+        if (jwtVerify.type != 'Normal user') {
+            return res.status(401).json('Ikke tilladt, kun jobsøgere kan slette profil her');
+        }
 
-    let result = await users.deleteUser(jwtVerify.userId);
+        let result = await users.deleteUser(jwtVerify.userId);
 
-    if (result.success) {
-        return res.status(200).json('Brugerens profil er slettet');
-    } else {
-        return res.status(500).json('Brugerens profil kunne ikke slettes eller Brugerens profil kunne ikke findes');
+        if (result.success) {
+            return res.status(200).json('Brugerens profil er slettet');
+        } else {
+            return res.status(500).json('Brugerens profil kunne ikke slettes eller Brugerens profil kunne ikke findes');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
