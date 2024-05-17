@@ -22,7 +22,7 @@ passport.use(
         },
         function (accessToken, refreshToken, profile, callback) {
             // this part is called after users login regardless if success or fail
-            if (!profile || !profile.emails) {
+            if (!profile || !profile.emails || profile.emails.length === 0) {
                 //check for values in the profile varible. if empty it failed
                 return callback(new Error('Profile information is incomplete'));
             }
@@ -48,7 +48,7 @@ passport.use(
             callbackURL: 'http://localhost:3000/auth/google/callback',
         },
         function (accessToken, refreshToken, profile, callback) {
-            if (!profile || !profile.emails) {
+            if (!profile || !profile.emails || profile.emails.length === 0) {
                 //check for values in the profile varible. if empty it failed
                 return callback(new Error('Profile information is incomplete'));
             }
