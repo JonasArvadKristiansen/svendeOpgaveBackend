@@ -4,7 +4,6 @@ require('dotenv').config();
 // creating token for a user
 function createJWT(user, res) {
     // signing jwt
-    console.log(user)
     const accessToken = jsonwebtoken.sign({ user: user }, process.env.TOKEN_SECRET, { expiresIn: 60 * 60 });
     if (accessToken) {
         return res.status(200).json({ token: accessToken });
@@ -22,7 +21,7 @@ function verifyToken(req) {
             const token = authHeader.split(' ')[1]; // Removing 'Bearer' prefix
             jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (error, decodedToken) => {
                 if (error) {
-                    reject({ errorMessage: 'Fejl i at godkende token' });
+                    reject({error: error, errorMessage: 'Fejl i at godkende token' });
                 } else {
                     resolve({userId: decodedToken.user.id, type: decodedToken.user.type }); // Token verification succeeded
                 }
