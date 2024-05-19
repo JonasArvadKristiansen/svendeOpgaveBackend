@@ -67,12 +67,17 @@ passport.use(
 );
 
 router.get('/info', async (req, res) => {
+    try {
     const jwtVerify = await jwt.verifyToken(req);
 
     if (jwtVerify) {
         users.getInfo(jwtVerify.userId, res);
     } else {
         return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+    }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 

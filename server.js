@@ -9,10 +9,10 @@ const jobpostings = require('./routes/jobpostings.routes');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/user', users);
-app.use('/admin', admin);
-app.use('/company', companys);
-app.use('/jobpost', jobpostings);
+app.use('/api/user', users);
+app.use('/api/admin', admin);
+app.use('/api/company', companys);
+app.use('/api/jobpost', jobpostings);
 
 app.listen(3000, () => {
     console.log('app is running on port 3000');
