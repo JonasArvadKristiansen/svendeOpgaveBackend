@@ -183,7 +183,7 @@ router.put('/update', async (req, res) => {
         if (email) {
             const companyExist = await companys.companyExist(email, jwtVerify.userId);
 
-            if (!companyExist) {
+            if (companyExist) {
                 return res.status(409).json('Email allerede i brug');
             }
 

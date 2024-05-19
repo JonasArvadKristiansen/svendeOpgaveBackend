@@ -229,8 +229,10 @@ const deleteJobposting = (jobpostingId) => {
         db.query('DELETE from jobpostings WHERE id = ?', jobpostingId, (error, result) => {
             if (error) {
                 reject({ error: error, errorMessage: 'kunne ikke slette jobopslag' });
-            } else {
+            } else if (result.affectedRows > 0) {
                 resolve(true);
+            } else {
+                reject({ error: error, errorMessage: 'Ingen bruger fundet' });
             }
         });
     });

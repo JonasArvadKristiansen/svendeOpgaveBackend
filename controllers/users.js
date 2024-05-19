@@ -177,9 +177,11 @@ const deleteUser = (userId) => {
     return new Promise((resolve, reject) => {
         db.query('DELETE from users WHERE id = ?', userId, (error, result) => {
             if (error) {
-                reject({ error: error, errorMessage: 'Kunne ikke slette virksomheds bruger' });
-            } else {
+                reject({ error: error, errorMessage: 'Kunne ikke slette bruger' });
+            } else if (result.affectedRows > 0) {
                 resolve(true);
+            } else {
+                reject({ error: error, errorMessage: 'Ingen bruger fundet' });
             }
         });
     });

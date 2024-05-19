@@ -380,8 +380,10 @@ const deleteCompanyUser = (companyID) => {
         db.query('DELETE from companys WHERE id = ?', companyID, (error, result) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke slette virksomheds bruger' });
-            } else {
+            }  else if (result.affectedRows > 0) {
                 resolve(true);
+            } else {
+                reject({ error: error, errorMessage: 'Ingen Virksomheds bruger fundet' });
             }
         });
     });

@@ -42,7 +42,7 @@ const allData = (req, res) => {
 
 // for getting all banned emails
 const getAllBannedEmails = (req, res) => {
-    db.query('SELECT email FROM bannedemails', (error, data) => {
+    db.query('SELECT email FROM bannedEmails', (error, data) => {
         if (error) {
             console.error(error);
             res.status(500).json('Kunne ikke hente ban emails');
@@ -55,7 +55,7 @@ const getAllBannedEmails = (req, res) => {
 // this is used to check if email is already banned
 const bannedEmailCheck = (email) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM bannedemails WHERE email = ?', email, (error, data) => {
+        db.query('SELECT * FROM bannedEmails WHERE email = ?', email, (error, data) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke tjekke ban email' });
             } else {
@@ -72,7 +72,7 @@ const bannedEmailCheck = (email) => {
 // for ban a email from use
 const banEmail = (email) => {
     return new Promise((resolve, reject) => {
-        db.query('INSERT INTO bannedemails (email) VALUES (?)', email, (error, result) => {
+        db.query('INSERT INTO bannedEmails (email) VALUES (?)', email, (error, result) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke ban email' });
             } else if (result.affectedRows == 0) {
