@@ -161,7 +161,7 @@ router.post('/create', async (req, res, next) => {
 
         const bannedEmail = await users.bannedEmailCheck(email);
 
-        if (!bannedEmail) {
+        if (bannedEmail) {
             return res.status(409).json('Email er ikke tiladt at bruge');
         }
 
@@ -210,7 +210,7 @@ router.put('/update', async (req, res) => {
             }
 
             const bannedEmail = await users.bannedEmailCheck(email);
-
+            
             if (bannedEmail) {
                 return res.status(409).json('Email er ikke tiladt at bruge');
             }
