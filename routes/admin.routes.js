@@ -3,23 +3,33 @@ const admin = require('../controllers/admin');
 const jwt = require('../utils/jwt');
 
 router.get('/statistikData', async (req, res) => {
-    let jwtVerify = await jwt.verifyToken(req);
+    try {
+        let jwtVerify = await jwt.verifyToken(req);
 
-    if (jwtVerify.type != 'Admin') {
-        return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+        if (jwtVerify.type != 'Admin') {
+            return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+        }
+
+        admin.allData(req, res);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
-
-    admin.allData(req, res);
 });
 
 router.get('/allBannedEmails', async (req, res) => {
-    let jwtVerify = await jwt.verifyToken(req);
+    try {
+        let jwtVerify = await jwt.verifyToken(req);
 
-    if (jwtVerify.type != 'Admin') {
-        return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+        if (jwtVerify.type != 'Admin') {
+            return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+        }
+
+        admin.getAllBannedEmails(req, res);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
-
-    admin.getAllBannedEmails(req, res);
 });
 
 router.post('/banEmail', async (req, res) => {
@@ -40,7 +50,7 @@ router.post('/banEmail', async (req, res) => {
 
         if (checkEmail) {
             let result = await admin.banEmail(email);
-            
+
             if (result) {
                 return res.status(200).json('Email kan længere bruges på siden');
             } else {

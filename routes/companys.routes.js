@@ -39,16 +39,21 @@ router.get('/profile', async (req, res) => {
 });
 
 router.get('/info', async (req, res) => {
-    const jwtVerify = await jwt.verifyToken(req);
+    try {
+        const jwtVerify = await jwt.verifyToken(req);
 
-    if (jwtVerify.type != 'Company user') {
-        return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan se profil her');
-    }
+        if (jwtVerify.type != 'Company user') {
+            return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan se profil her');
+        }
 
-    if (jwtVerify) {
-        companys.getCompanyInfo(jwtVerify.userId, res);
-    } else {
-        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+        if (jwtVerify) {
+            companys.getCompanyInfo(jwtVerify.userId, res);
+        } else {
+            return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 
@@ -74,8 +79,19 @@ router.post('/login', loginLimit, async (req, res) => {
 router.post('/create', async (req, res, next) => {
     try {
         //setting varibles
-        const { companyName, password, repeatPassword, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } =
-            req.body;
+        const {
+            companyName,
+            password,
+            repeatPassword,
+            companyDescription,
+            address,
+            city,
+            phonenumber,
+            email,
+            numberOfEmployees,
+            cvrNumber,
+            jobtypes,
+        } = req.body;
 
         //checking if fields are empty
         if (

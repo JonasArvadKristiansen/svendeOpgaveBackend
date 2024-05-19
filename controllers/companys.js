@@ -94,7 +94,7 @@ const profile = (req, res) => {
                 [companyID],
                 (error, data) => {
                     if (error) {
-                        reject(error)
+                        reject(error);
                     } else {
                         resolve(data);
                     }
@@ -107,7 +107,7 @@ const profile = (req, res) => {
                 [companyID],
                 (error, data) => {
                     if (error) {
-                        reject(error)
+                        reject(error);
                     } else {
                         resolve(data);
                     }
@@ -156,10 +156,10 @@ const login = (req) => {
                     const createdUser = { id: data[0].id, type: 'Company user' };
                     resolve({ success: true, companyUser: createdUser });
                 } else {
-                    reject({errorMessage: 'Adgangskode forkert'});
+                    reject({ errorMessage: 'Adgangskode forkert' });
                 }
             } else {
-                reject({errorMessage: 'Ingen bruger fundet'});
+                reject({ errorMessage: 'Ingen bruger fundet' });
             }
         });
     });
@@ -182,7 +182,7 @@ const create = (req) => {
                     reject({ error: error, errorMessage: 'Kunne ikke lave ny virksomheds bruger' });
                 } else {
                     let createdUser = { id: result.insertId, type: 'Company user' };
-                    resolve({companyUser: createdUser, CompanyId: result.insertId, jobtypesData: jobtypes });
+                    resolve({ companyUser: createdUser, CompanyId: result.insertId, jobtypesData: jobtypes });
                 }
             }
         );
@@ -208,7 +208,7 @@ const companyExist = (email, userId) => {
         db.query('SELECT * FROM companys WHERE email = ?', email, (error, data) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke tjekke virksomheds brugere igennem efter email' });
-            } else if(data.length > 0 && data[0].id == userId) {
+            } else if (data.length > 0 && data[0].id == userId) {
                 reject({ error: error, errorMessage: 'Virksomheds brugeren bruger allerede denne email' });
             } else {
                 resolve(data.length > 0);
@@ -226,7 +226,7 @@ const checkSentPassword = (password, companyID) => {
             } else {
                 let passwordhashed = bcrypt.compareSync(password, data[0].password);
                 if (passwordhashed && data.length > 0) {
-                    resolve(true)
+                    resolve(true);
                 } else {
                     reject({ errorMessage: 'Gamle adgangskode forkert' });
                 }
@@ -242,7 +242,7 @@ const allCompanysJobpostings = (companyID) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke hente virksomheds brugers opslag' });
             } else {
-                resolve({jobPostingsCount: result[0].count });
+                resolve({ jobPostingsCount: result[0].count });
             }
         });
     });

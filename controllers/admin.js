@@ -6,7 +6,7 @@ const allData = (req, res) => {
         new Promise((resolve, reject) => {
             db.query('SELECT COUNT(*) AS count FROM companys', (error, result) => {
                 if (error) {
-                    reject(error)
+                    reject(error);
                 } else {
                     resolve(result[0].count);
                 }
@@ -15,7 +15,7 @@ const allData = (req, res) => {
         new Promise((resolve, reject) => {
             db.query('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 0', (error, result) => {
                 if (error) {
-                    reject(error)
+                    reject(error);
                 } else {
                     resolve(result[0].count);
                 }
@@ -24,7 +24,7 @@ const allData = (req, res) => {
         new Promise((resolve, reject) => {
             db.query('SELECT COUNT(*) AS count FROM jobpostings', (error, result) => {
                 if (error) {
-                    reject(error)
+                    reject(error);
                 } else {
                     resolve(result[0].count);
                 }

@@ -36,10 +36,10 @@ const login = (req) => {
                     }
                     resolve({ success: true, user: createdUser });
                 } else {
-                    reject({errorMessage: 'Adgangskode forkert'});
+                    reject({ errorMessage: 'Adgangskode forkert' });
                 }
             } else {
-                reject({errorMessage: 'Ingen bruger fundet'});
+                reject({ errorMessage: 'Ingen bruger fundet' });
             }
         });
     });
@@ -88,7 +88,7 @@ const userExist = (email, userId) => {
         db.query('SELECT * FROM users WHERE email = ?', email, (error, data) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke tjekke brugere igennem efter email' });
-            } else if(data.length > 0 && data[0].id == userId) {
+            } else if (data.length > 0 && data[0].id == userId) {
                 reject({ error: error, errorMessage: 'Brugeren bruger allerede denne email' });
             } else {
                 resolve(data.length > 0);
@@ -106,7 +106,7 @@ const checkSentPassword = (password, companyID) => {
             } else {
                 let passwordhashed = bcrypt.compareSync(password, data[0].password);
                 if (passwordhashed && data.length > 0) {
-                    resolve(true)
+                    resolve(true);
                 } else {
                     reject({ errorMessage: 'Gamle adgangskode forkert' });
                 }

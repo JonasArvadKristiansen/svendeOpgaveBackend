@@ -17,16 +17,21 @@ router.get('/filter', async (req, res) => {
 });
 
 router.get('/info', async (req, res) => {
-    const { jobpostingId } = req.query;
+    try {
+        const { jobpostingId } = req.query;
 
-    if (!jobpostingId) {
-        return res.status(400).json('jobpostingId mangler');
-    }
+        if (!jobpostingId) {
+            return res.status(400).json('jobpostingId mangler');
+        }
 
-    const jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-    if (jwtVerify) {
-        jobpostings.jobposting(req, res);
+        if (jwtVerify) {
+            jobpostings.jobposting(req, res);
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
 });
 

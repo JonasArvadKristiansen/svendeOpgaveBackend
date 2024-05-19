@@ -68,13 +68,13 @@ passport.use(
 
 router.get('/info', async (req, res) => {
     try {
-    const jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-    if (jwtVerify) {
-        users.getInfo(jwtVerify.userId, res);
-    } else {
-        return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-    }
+        if (jwtVerify) {
+            users.getInfo(jwtVerify.userId, res);
+        } else {
+            return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
+        }
     } catch (error) {
         console.error(error);
         return res.status(500).json(error.errorMessage);
@@ -124,48 +124,53 @@ router.get('/auth/facebook/callback', passport.authenticate('facebook', { sessio
 });
 
 router.post('/create', async (req, res, next) => {
-    //setting varibles
-    const { fullName, password, repeatPassword, email, phonenumber } = req.body;
+    try {
+        //setting varibles
+        const { fullName, password, repeatPassword, email, phonenumber } = req.body;
 
-    //checking if fields are empty
-    if (!(fullName && password && repeatPassword && email && phonenumber)) {
-        return res.status(400).json('Mangler felter udfyldt');
+        //checking if fields are empty
+        if (!(fullName && password && repeatPassword && email && phonenumber)) {
+            return res.status(400).json('Mangler felter udfyldt');
+        }
+
+        if (password.length < 8) {
+            return res.status(409).json('Adgangskode for kort');
+        }
+
+        //RegExp test checks if password contains one upper_case letter
+        const containsUppercase = /[A-Z]/.test(password);
+
+        // RegExp test Checks if the password contains at least one number
+        const containsNumber = /\d/.test(password);
+
+        if (!containsUppercase || !containsNumber) {
+            return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+        }
+
+        //checking if passwords match
+        if (password != repeatPassword) {
+            return res.status(409).json('Adgangskoder ikke ens');
+        }
+
+        //checks if user exists
+        const userExist = await users.userExist(email);
+
+        if (userExist) {
+            return res.status(409).json('Brugeren eksitere allerede');
+        }
+
+        const bannedEmail = await users.bannedEmailCheck(email);
+
+        if (bannedEmail) {
+            return res.status(409).json('Email er ikke tiladt at bruge');
+        }
+
+        //sends to next endpoint if all checks are cleared
+        next();
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(error.errorMessage);
     }
-
-    if (password.length < 8) {
-        return res.status(409).json('Adgangskode for kort');
-    }
-
-    //RegExp test checks if password contains one upper_case letter
-    const containsUppercase = /[A-Z]/.test(password);
-
-    // RegExp test Checks if the password contains at least one number
-    const containsNumber = /\d/.test(password);
-
-    if (!containsUppercase || !containsNumber) {
-        return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
-    }
-
-    //checking if passwords match
-    if (password != repeatPassword) {
-        return res.status(409).json('Adgangskoder ikke ens');
-    }
-
-    //checks if user exists
-    const userExist = await users.userExist(email);
-    
-    if (userExist) {
-        return res.status(409).json('Brugeren eksitere allerede');
-    }
-
-    const bannedEmail = await users.bannedEmailCheck(email);
-
-    if (bannedEmail) {
-        return res.status(409).json('Email er ikke tiladt at bruge');
-    }
-
-    //sends to next endpoint if all checks are cleared
-    next();
 });
 
 router.post('/create', async (req, res) => {

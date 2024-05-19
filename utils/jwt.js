@@ -21,9 +21,9 @@ function verifyToken(req) {
             const token = authHeader.split(' ')[1]; // Removing 'Bearer' prefix
             jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (error, decodedToken) => {
                 if (error) {
-                    reject({error: error, errorMessage: 'Fejl i at godkende token eller token ikke gyldig længere' });
+                    reject({ error: error, errorMessage: 'Fejl i at godkende token eller token ikke gyldig længere' });
                 } else {
-                    resolve({userId: decodedToken.user.id, type: decodedToken.user.type }); // Token verification succeeded
+                    resolve({ userId: decodedToken.user.id, type: decodedToken.user.type }); // Token verification succeeded
                 }
             });
         } else {
