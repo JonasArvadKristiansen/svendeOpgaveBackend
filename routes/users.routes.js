@@ -161,7 +161,7 @@ router.post('/create', async (req, res, next) => {
 
         const bannedEmail = await users.bannedEmailCheck(email);
 
-        if (bannedEmail) {
+        if (!bannedEmail) {
             return res.status(409).json('Email er ikke tiladt at bruge');
         }
 
@@ -279,17 +279,13 @@ router.delete('/delete', async (req, res) => {
     try {
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (!jwtVerify.success) {
-            res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-        }
-
         if (jwtVerify.type != 'Normal user') {
             return res.status(401).json('Ikke tilladt, kun jobsøgere kan slette profil her');
         }
 
         let result = await users.deleteUser(jwtVerify.userId);
 
-        if (result.success) {
+        if (result) {
             return res.status(200).json('Brugerens profil er slettet');
         } else {
             return res.status(500).json('Brugerens profil kunne ikke slettes eller Brugerens profil kunne ikke findes');

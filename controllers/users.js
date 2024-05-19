@@ -76,7 +76,7 @@ const bannedEmailCheck = (email) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke hente ban emails' });
             } else {
-                resolve(data.length > 0);
+                resolve(data.length <= 0);
             }
         });
     });
