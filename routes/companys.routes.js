@@ -2,7 +2,7 @@ const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
 const rateLimit = require('express-rate-limit');
-const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: 'Too many login attempts, please try again later.' } });
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: 'Too many login attempts, please try again later.' });
 
 router.get('/all', async (req, res) => {
     companys.allCompanys(req, res);

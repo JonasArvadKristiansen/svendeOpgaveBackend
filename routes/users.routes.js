@@ -3,7 +3,7 @@ const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
-const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: 'Too many login attempts, please try again later.' } });
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: 'Too many login attempts, please try again later.' });
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
