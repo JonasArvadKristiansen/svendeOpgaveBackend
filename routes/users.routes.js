@@ -3,7 +3,9 @@ const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
-const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: 'Too many login attempts, please try again later.' });
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, handler: (req, res) => {
+    res.status(429).json({ message: 'Too many login attempts, please try again later.' });
+} });
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
@@ -101,7 +103,7 @@ router.post('/login', loginLimit, async (req, res) => {
     }
 });
 
-router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/auth/google/callback', passport.authenticate('google', { session: false }), function (req, res) {
     if (!req.user) {
@@ -112,7 +114,7 @@ router.get('/auth/google/callback', passport.authenticate('google', { session: f
 });
 
 // Endpoint for Facebook login
-router.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
+router.get('/auth/facebook', loginLimit, passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
 
 //Endpoint gets called here after users login to facebook
 router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), function (req, res) {
