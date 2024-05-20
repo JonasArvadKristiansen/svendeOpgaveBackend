@@ -47,7 +47,7 @@ router.get('/info', async (req, res) => {
         }
 
         if (jwtVerify) {
-            companys.getCompanyInfo(jwtVerify.userId, res);
+            companys.getCompanyInfo(jwtVerify.userId, req, res);
         } else {
             return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
         }

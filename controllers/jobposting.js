@@ -232,7 +232,7 @@ const deleteJobposting = (jobpostingId) => {
             } else if (result.affectedRows > 0) {
                 resolve(true);
             } else {
-                reject({ error: error, errorMessage: 'Ingen bruger fundet' });
+                reject({ error: error, errorMessage: 'Ingen jobopslag fundet' });
             }
         });
     });

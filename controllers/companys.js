@@ -85,6 +85,8 @@ const filterCompanys = (req, res) => {
 };
 
 const profile = (req, res) => {
+    const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
+    const rowsToSkip = (currentPageNumber - 1) * 10; //rows to skip
     const { companyID } = req.query;
     //promise all makes it so that if all is success it will send the data to frontend, but if one fails it returns error
     Promise.all([
@@ -103,7 +105,48 @@ const profile = (req, res) => {
         }),
         new Promise((resolve, reject) => {
             db.query(
-                'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ?',
+                'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
+                [companyID, rowsToSkip],
+                (error, data) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(data);
+                    }
+                }
+            );
+        }),
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?',
+                [companyID],
+                (error, data) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        const pageCount = Math.ceil(data[0].count / 10);
+                        resolve(pageCount);
+                    }
+                }
+            );
+        }),
+    ])
+        .then(([companyProfileData, jobpostingsData, pageCount]) => {
+            return res.status(200).json({ companyProfileData: companyProfileData, jobpostingsData: jobpostingsData, pages: pageCount });
+        })
+        .catch((error) => {
+            console.error(error);
+            return res.status(500).json('Kunne ikke hente virksomheds brugers profil');
+        });
+};
+
+const getCompanyInfo = (companyID, req, res) => {
+    const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
+    const rowsToSkip = (currentPageNumber - 1) * 10; //rows to skip
+    Promise.all([
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
                 [companyID],
                 (error, data) => {
                     if (error) {
@@ -114,29 +157,41 @@ const profile = (req, res) => {
                 }
             );
         }),
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
+                [companyID, rowsToSkip],
+                (error, data) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(data);
+                    }
+                }
+            );
+        }),
+        new Promise((resolve, reject) => {
+            db.query(
+                'SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?',
+                [companyID],
+                (error, data) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        const pageCount = Math.ceil(data[0].count / 10);
+                        resolve(pageCount);
+                    }
+                }
+            );
+        }),
     ])
-        .then(([companyProfileData, jobpostingsData]) => {
-            return res.status(200).json({ companyProfileData: companyProfileData, jobpostingsData: jobpostingsData });
+        .then(([companyProfileData, jobpostingsData, pageCount]) => {
+            return res.status(200).json({ companyProfileData: companyProfileData, jobpostingsData: jobpostingsData, pages: pageCount });
         })
         .catch((error) => {
             console.error(error);
-            return res.status(500).json('Kunne ikke virksomheds brugers profil');
+            return res.status(500).json('Kunne ikke hente virksomheds brugers profil');
         });
-};
-
-const getCompanyInfo = (companyId, res) => {
-    db.query(
-        'SELECT companyName ,companyDescription, address, phonenumber, email, numberOfEmployees, cvrNumber FROM companys WHERE id = ?',
-        companyId,
-        (error, data) => {
-            if (error) {
-                console.error(error);
-                return res.status(500).json('Kunne ikke hente virksomheds bruger');
-            } else {
-                return res.status(200).json(data);
-            }
-        }
-    );
 };
 
 const login = (req) => {
@@ -159,7 +214,7 @@ const login = (req) => {
                     reject({ errorMessage: 'Adgangskode forkert' });
                 }
             } else {
-                reject({ errorMessage: 'Ingen bruger fundet' });
+                reject({ errorMessage: 'Ingen Virksomheds bruger fundet' });
             }
         });
     });
