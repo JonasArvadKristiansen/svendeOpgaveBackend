@@ -36,7 +36,7 @@ const login = (req) => {
                     }
                     resolve({ success: true, user: createdUser });
                 } else {
-                    reject({ errorMessage: 'Adgangskode forkert' });
+                    reject({ errorMessage: 'Adgangskode eller email forkert' });
                 }
             } else {
                 reject({ errorMessage: 'Ingen bruger fundet' });
