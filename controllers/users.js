@@ -72,7 +72,7 @@ const create = (req) => {
 //checking if email is banned from use
 const bannedEmailCheck = (email) => {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM bannedemails WHERE email = ?', email, (error, data) => {
+        db.query('SELECT * FROM bannedEmails WHERE email = ?', email, (error, data) => {
             if (error) {
                 reject({ error: error, errorMessage: 'Kunne ikke hente ban emails' });
             } else {
