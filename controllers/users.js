@@ -13,36 +13,29 @@ const getInfo = (userId, res) => {
 };
 
 // for login a user
-const login = (req) => {
+const login = async (req) => {
     const { email, password } = req.body;
 
-    //had to wrap in a promise in order to return true or false. If i did not it returned before value was resolved
-    return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM users WHERE email = ?', email, (error, data) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'Kunne ikke logge brugeren ind' });
-            } else if (data.length > 0) {
-                // tjekking if typed password match hashed password from database
-                let passwordhashed = bcrypt.compareSync(password, data[0].password);
+    try {
+        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', email);
 
-                //pwCheck return true if they match
-                if (passwordhashed) {
-                    let createdUser = {};
+        if (rows.length > 0) {
+            // tjekking if typed password match hashed password from database
+            const passwordMatched = bcrypt.compareSync(password, rows.password);
 
-                    if (data[0].isAdmin === 1) {
-                        createdUser = { id: data[0].id, type: 'Admin' };
-                    } else {
-                        createdUser = { id: data[0].id, type: 'Normal user' };
-                    }
-                    resolve({ success: true, user: createdUser });
-                } else {
-                    reject({ errorMessage: 'Adgangskode eller email forkert' });
-                }
+            //passwordMatched return true if they match
+            if (passwordMatched) {
+                const userType = rows[0].isAdmin === 1 ? 'Admin' : 'Normal user';
+                return { success: true, user: { id: rows[0].id, type: userType } };
             } else {
-                reject({ errorMessage: 'Ingen bruger fundet' });
+                throw new Error('Adgangskode eller email forkert');
             }
-        });
-    });
+        } else {
+            throw new Error('Ingen bruger fundet');
+        }
+    } catch (error) {
+        throw new Error(error);
+    }
 };
 
 // for creating a user

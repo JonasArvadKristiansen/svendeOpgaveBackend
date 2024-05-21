@@ -99,7 +99,7 @@ router.post('/login', loginLimit, async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        return res.status(500).json(error.errorMessage);
+        return res.status(500).json(error.message.slice(7));
     }
 });
 

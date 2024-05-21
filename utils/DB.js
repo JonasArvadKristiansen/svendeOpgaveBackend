@@ -9,7 +9,7 @@ const con = mysql.createPool({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     connectionLimit: process.env.DB_CONNECTIONLIMIT,
-});
+}).promise();
 
 //listing for new connections
 con.on('connection', function (connection) {
