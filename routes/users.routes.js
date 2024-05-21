@@ -68,190 +68,212 @@ passport.use(
     )
 );
 
-router.get('/info', async (req, res) => {
+router.get('/info', async (req, res, next) => {
     try {
         const jwtVerify = await jwt.verifyToken(req);
-
-        if (jwtVerify) {
-            users.getInfo(jwtVerify.userId, res);
-        } else {
-            return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-        }
+        await users.getInfo(jwtVerify.userId, res);
+        
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error); // this pass error to the central error handler in server.js
     }
 });
 
-router.post('/login', loginLimit, async (req, res) => {
+
+router.post('/login', loginLimit, async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
         if (!(email && password)) {
-            return res.status(400).send('Mangler felter udfyldt');
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
         }
 
-        const response = await users.login(req, res);
-        if (response.success) {
-            jwt.createJWT(response.user, res);
-        } else {
-            return res.status(404).json('Adgangskode eller email forkert. Tjek indtastet felter igen');
-        }
+        const response = await users.login(req);
+        jwt.createJWT(response.user, res);
+
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.message.slice(7));
+        next(error); // this pass error to the central error handler in server.js
     }
 });
 
+
 router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/auth/google/callback', passport.authenticate('google', { session: false }), function (req, res) {
-    if (!req.user) {
-        return res.status(401).json({ message: 'Login for google failed' });
+router.get('/auth/google/callback', passport.authenticate('google', { session: false }), function (req, res, next) {
+    try {
+        if (!req.user) {
+            const error = new Error('Login for google failed');
+            error.status = 401;
+            throw error;
+        }
+        // If authentication succeeds, create JWT
+        jwt.createJWT(req.user, res);
+    } catch (error) {
+        next(error); // this pass error to the central error handler in server.js
     }
-    // If authentication succeeds, create JWT
-    jwt.createJWT(req.user, res);
 });
 
 // Endpoint for Facebook login
 router.get('/auth/facebook', loginLimit, passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
 
 //Endpoint gets called here after users login to facebook
-router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), function (req, res) {
-    if (!req.user) {
-        return res.status(401).json({ message: 'Login for facebook failed' });
+router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), function (req, res, next) {
+    try {
+        if (!req.user) {
+            const error = new Error('Login for facebook failed');
+            error.status = 401;
+            throw error;
+        }
+        // If authentication succeeds, create JWT
+        jwt.createJWT(req.user, res);
+    } catch (error) {
+        next(error); // this pass error to the central error handler in server.js
     }
-    // If authentication succeeds, create JWT
-    jwt.createJWT(req.user, res);
 });
+
 
 router.post('/create', async (req, res, next) => {
     try {
-        //setting varibles
+        // Setting variables
         const { fullName, password, repeatPassword, email, phonenumber } = req.body;
 
-        //checking if fields are empty
+        // Checking if fields are empty
         if (!(fullName && password && repeatPassword && email && phonenumber)) {
-            return res.status(400).json('Mangler felter udfyldt');
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
         }
 
         if (password.length < 8) {
-            return res.status(409).json('Adgangskode for kort');
+            const error = new Error('Adgangskode for kort');
+            error.status = 409;
+            throw error;
         }
 
-        //RegExp test checks if password contains one upper_case letter
+        // RegExp test checks if password contains one upper_case letter
         const containsUppercase = /[A-Z]/.test(password);
 
         // RegExp test Checks if the password contains at least one number
         const containsNumber = /\d/.test(password);
 
         if (!containsUppercase || !containsNumber) {
-            return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+            const error = new Error('Adgangskode skal indeholde mindst et stort bogstav og et tal');
+            error.status = 409;
+            throw error;
         }
 
-        //checking if passwords match
-        if (password != repeatPassword) {
-            return res.status(409).json('Adgangskoder ikke ens');
+        // Checking if passwords match
+        if (password !== repeatPassword) {
+            const error = new Error('Adgangskoder ikke ens');
+            error.status = 409;
+            throw error;
         }
 
-        //checks if user exists
-        const userExist = await users.userExist(email);
+        // Checking if user exists
+        const userExists = await users.userExist(email);
 
-        if (userExist) {
-            return res.status(409).json('Brugeren eksitere allerede');
+        if (userExists) {
+            const error = new Error('Brugeren eksisterer allerede');
+            error.status = 409;
+            throw error;
         }
 
+        // Checking if email is banned
         const bannedEmail = await users.bannedEmailCheck(email);
 
         if (bannedEmail) {
-            return res.status(409).json('Email er ikke tiladt at bruge');
+            const error = new Error('Email er ikke tilladt at bruge');
+            error.status = 409;
+            throw error;
         }
 
-        //sends to next endpoint if all checks are cleared
-        next();
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
-    }
-});
+        // Creating the user
+        const result = await users.create(req);
 
-router.post('/create', async (req, res) => {
-    try {
-        let result = await users.create(req, res);
-        if (result.success) {
-            jwt.createJWT(result.user, res);
-        } else {
-            return res.status(500).json('Kunne ikke lave ny bruger');
-        }
+        // JWT Creation
+        jwt.createJWT(result.user, res);
+        
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error); // Passes the error to the centralized error handler
     }
 });
 
 router.post('/sendEmail', async (req, res) => {});
 
-router.put('/update', async (req, res) => {
+router.put('/update', async (req, res, next) => {
     try {
         const { fullName, email, phonenumber } = req.body;
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type != 'Normal user') {
-            return res.status(401).json('Ikke tilladt, kun jobsøgere kan ændre profil her');
+            const error = new Error('Ikke tilladt, kun jobsøgere kan ændre profil her');
+            error.status = 401;
+            throw error;
         }
 
         if (!(fullName || email || phonenumber)) {
-            return res.status(400).json('Mindst et felt skal være udfyldt');
+            const error = new Error('Mindst et felt skal være udfyldt');
+            error.status = 400;
+            throw error;
         }
 
         if (email) {
             const userExist = await users.userExist(email, jwtVerify.userId);
 
             if (userExist) {
-                return res.status(409).json('Email allerede i brug');
+                const error = new Error('Email allerede i brug');
+                error.status = 409;
+                throw error;
             }
 
             const bannedEmail = await users.bannedEmailCheck(email);
             
             if (bannedEmail) {
-                return res.status(409).json('Email er ikke tiladt at bruge');
+                const error = new Error('Email er ikke tiladt at bruge');
+                error.status = 409;
+                throw error;
             }
         }
 
-        let result = await users.update(req, jwtVerify.userId);
-
-        if (result) {
-            return res.status(200).json('Brugeren opdateret');
-        } else {
-            return res.status(500).json('Kunne ikke opdatere bruger');
-        }
+        const result = await users.update(req, jwtVerify.userId);
+        
+        return res.status(200).json('Brugeren opdateret');
     } catch (error) {
         console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error)
     }
 });
 
-router.put('/password', async (req, res) => {
+router.put('/password', async (req, res, next) => {
     try {
         const { oldPassword, newPassword, repeatNewPassword } = req.body;
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type != 'Normal user' && jwtVerify.type != 'Admin') {
-            return res.status(401).json('Ikke tilladt, kun jobsøgere og admin kan opdatere adgangskode her');
+            const error = new Error('Ikke tilladt, kun jobsøgere og admin kan opdatere adgangskode her');
+            error.status = 401;
+            throw error;
         }
 
         if (!(oldPassword && newPassword && repeatNewPassword)) {
-            return res.status(400).json('Mangler felter udfyldt');
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
         }
 
         const verifyOldPassword = await users.checkSentPassword(oldPassword, jwtVerify.userId);
 
         if (!verifyOldPassword) {
-            return res.status(409).json('Gamle adgangskode ikke rigtig');
+            const error = new Error('Gamle adgangskode ikke rigtig');
+            error.status = 409;
+            throw error;
         }
 
-        if (newPassword != repeatNewPassword) {
-            return res.status(409).json('Nye Adgangskode felter ikke ens');
+        if (newPassword !== repeatNewPassword) {
+            const error = new Error('Nye Adgangskode felter ikke ens');
+            error.status = 409;
+            throw error;
         }
 
         //RegExp test checks if password contains one upper_case letter
@@ -261,40 +283,36 @@ router.put('/password', async (req, res) => {
         const containsNumber = /\d/.test(newPassword);
 
         if (!containsUppercase || !containsNumber) {
-            return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+            const error = new Error('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+            error.status = 409;
+            throw error;
         }
 
-        let result = await users.updatePassword(req, jwtVerify.userId);
-
-        if (result) {
-            return res.status(200).json('Brugerens adgangskode opdateret');
-        } else {
-            return res.status(500).json('Kunnne ikke opdatere adgangskoden');
-        }
+        await users.updatePassword(req, jwtVerify.userId);
+        
+        return res.status(200).json('Brugerens adgangskode opdateret');
     } catch (error) {
         console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error)
     }
 });
 
-router.delete('/delete', async (req, res) => {
+router.delete('/delete', async (req, res, next) => {
     try {
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type != 'Normal user') {
-            return res.status(401).json('Ikke tilladt, kun jobsøgere kan slette profil her');
+            const error = new Error('Ikke tilladt, kun jobsøgere kan slette profil her');
+            error.status = 401;
+            throw error;
         }
 
-        let result = await users.deleteUser(jwtVerify.userId);
+        const result = await users.deleteUser(jwtVerify.userId);
 
-        if (result) {
-            return res.status(200).json('Brugerens profil er slettet');
-        } else {
-            return res.status(500).json('Brugerens profil kunne ikke slettes eller Brugerens profil kunne ikke findes');
-        }
+        return res.status(200).json('Brugerens profil er slettet');
     } catch (error) {
         console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error)
     }
 });
 
