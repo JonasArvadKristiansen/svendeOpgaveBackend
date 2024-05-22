@@ -6,81 +6,85 @@ const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, handler: (req, 
     res.status(429).json({ message: 'Too many login attempts, please try again later.' });
 } });
 
-router.get('/all', async (req, res) => {
-    companys.allCompanys(req, res);
-});
-
-router.get('/filter', async (req, res) => {
-    const { jobtype, search } = req.query;
-
-    if (!(jobtype || search)) {
-        return res.status(400).json('Mindst et filter skal være udfyldt');
+router.get('/all', async (req, res, next) => {
+    try {
+        await companys.allCompanys(req, res);
+    } catch(error) {
+        next(error);
     }
-
-    companys.filterCompanys(req, res);
 });
 
-router.get('/profile', async (req, res) => {
+router.get('/filter', async (req, res, next) => {
+    try {
+        const { jobtype, search } = req.query;
+
+        if (!(jobtype || search)) {
+            const error = new Error('Mindst et filter skal være udfyldt');
+            error.status = 400;
+            throw error;
+        }
+
+        await companys.filterCompanys(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+router.get('/profile', async (req, res, next) => {
     try {
         const { companyID } = req.query;
 
         if (!companyID) {
-            return res.status(400).json('companyID mangler');
+            const error = new Error('companyID mangler');
+            error.status = 400;
+            throw error;
         }
 
-        jwtVerify = await jwt.verifyToken(req);
-        if (jwtVerify) {
-            companys.profile(req, res);
-        } else {
-            return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-        }
+        await jwt.verifyToken(req);
+        
+        await companys.profile(req, res);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error); // Pass the error to the central error handler
     }
 });
 
-router.get('/info', async (req, res) => {
+router.get('/info', async (req, res, next) => {
     try {
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Company user') {
-            return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan se profil her');
+        if (jwtVerify.type !== 'Company user') {
+            const error = new Error('Ikke tilladt, kun virksomheds brugere kan se profil her');
+            error.status = 401;
+            throw error;
         }
 
-        if (jwtVerify) {
-            companys.getCompanyInfo(jwtVerify.userId, req, res);
-        } else {
-            return res.status(401).json('Token ikke gyldig længere eller er blevet manipuleret');
-        }
+        await companys.getCompanyInfo(jwtVerify.userId, req, res);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error); // Pass the error to the central error handler
     }
 });
 
-router.post('/login', loginLimit, async (req, res) => {
+router.post('/login', loginLimit, async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
         if (!(email && password)) {
-            return res.status(400).send('Mangler felter udfyldt');
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
         }
-        const response = await companys.login(req, res);
-        if (response.success) {
-            jwt.createJWT(response.companyUser, res);
-        } else {
-            return res.status(404).json('Kunne ikke logge virksomheds brugeren ind');
-        }
+
+        const response = await companys.login(req);
+
+        jwt.createJWT(response.user, res);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error); // Pass the error to the central error handler
     }
 });
 
 router.post('/create', async (req, res, next) => {
     try {
-        //setting varibles
         const {
             companyName,
             password,
@@ -95,77 +99,62 @@ router.post('/create', async (req, res, next) => {
             jobtypes,
         } = req.body;
 
-        //checking if fields are empty
-        if (
-            !(
-                companyName &&
-                password &&
-                repeatPassword &&
-                companyDescription &&
-                address &&
-                city &&
-                phonenumber &&
-                email &&
-                numberOfEmployees &&
-                cvrNumber &&
-                jobtypes
-            )
-        ) {
-            return res.status(400).send('Mangler felter udfyldt');
+        // Checking if required fields are provided
+        if (!(companyName && password && repeatPassword && companyDescription && address && city && phonenumber && email && numberOfEmployees && cvrNumber && jobtypes)) {
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
         }
 
+        // Validating password length
         if (password.length < 8) {
-            return res.status(409).json('Adgangskode for kort');
+            const error = new Error('Adgangskode for kort');
+            error.status = 409;
+            throw error;
         }
 
-        //RegExp test checks if password contains one upper_case letter
+        // RegExp test checks if password contains one upper_case letter
         const containsUppercase = /[A-Z]/.test(password);
-
+        
         // RegExp test Checks if the password contains at least one number
         const containsNumber = /\d/.test(password);
 
         if (!containsUppercase || !containsNumber) {
-            return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+            const error = new Error('Adgangskode skal indeholde mindst et stort bogstav og et tal');
+            error.status = 409;
+            throw error;
         }
 
-        //checking if passwords match
-        if (password != repeatPassword) {
-            return res.status(409).json('Adgangskoder ikke ens');
+        // Checking if passwords match
+        if (password !== repeatPassword) {
+            const error = new Error('Adgangskoder ikke ens');
+            error.status = 409;
+            throw error;
         }
 
-        //checks if user exists
+        // Check if company already exists
         const companyExist = await companys.companyExist(email);
-
         if (companyExist) {
-            return res.status(409).json('Firma eksitere allerede');
+            const error = new Error('Firma eksisterer allerede');
+            error.status = 409;
+            throw error;
         }
 
+        // Check if email is banned
         const bannedEmail = await companys.bannedEmailCheck(email);
-
         if (bannedEmail) {
-            return res.status(409).json('Email er ikke tiladt at bruge');
+            const error = new Error('Email er ikke tilladt at bruge');
+            error.status = 409;
+            throw error;
         }
 
-        //sends to next endpoint if all checks are cleared
-        next();
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
-    }
-});
+        // Create the company user
+        const resultOfCreateCompany = await companys.create(req, res);
 
-router.post('/create', async (req, res) => {
-    try {
-        let resultOfCreateCompany = await companys.create(req, res);
-
-        if (resultOfCreateCompany && resultOfCreateCompany.companyUser) {
-            jwt.createJWT(resultOfCreateCompany.companyUser, res);
-        } else {
-            return res.status(500).json('Kunne ikke lave ny virksomheds bruger');
-        }
+        // If creation successful, create JWT token
+        jwt.createJWT(resultOfCreateCompany.user, res);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
@@ -174,71 +163,76 @@ router.put('/update', async (req, res) => {
         const { companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Company user') {
-            return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan ændre profil her');
+        if (jwtVerify.type !== 'Company user') {
+            const error = new Error('Ikke tilladt, kun virksomheds brugere kan ændre profil her');
+            error.status = 401;
+            throw error;
         }
 
         if (!(companyName || companyDescription || address || city || phonenumber || email || numberOfEmployees || cvrNumber || jobtypes)) {
-            return res.status(400).json('Mindst et felt skal være udfyldt');
+            const error = new Error('Mindst et felt skal være udfyldt');
+            error.status = 400;
+            throw error;
         }
 
         if (email) {
             const companyExist = await companys.companyExist(email, jwtVerify.userId);
 
             if (companyExist) {
-                return res.status(409).json('Email allerede i brug');
+                const error = new Error('Email allerede i brug');
+                error.status = 409;
+                throw error;
             }
 
             const bannedEmail = await companys.bannedEmailCheck(email);
 
             if (bannedEmail) {
-                return res.status(409).json('Email er ikke tiladt at bruge');
+                const error = new Error('Email er ikke tiladt at bruge');
+                error.status = 409;
+                throw error;
             }
         }
 
-        let result = await companys.updateCompany(req, jwtVerify.userId);
+        await companys.updateCompany(req, jwtVerify.userId);
 
-        if (result) {
-            let companyJobpostings = await companys.allCompanysJobpostings(jwtVerify.userId);
+        const companyJobpostings = await companys.allCompanysJobpostings(jwtVerify.userId);
 
-            if (companyJobpostings.jobPostingsCount !== 0) {
-                if (address || city || phonenumber || email) {
-                    let updateJobpostes = await companys.updateJobpostes(jwtVerify.userId, req);
-
-                    if (!updateJobpostes) {
-                        return res.status(200).json('Virksomheds brugerens jobopslag eller jobopslagene ikke opdateret');
-                    }
-                }
-                return res.status(200).json('Virksomheds brugeren er opdateret');
+        if (companyJobpostings.jobPostingsCount !== 0) {
+            if (address || city || phonenumber || email) {
+                await companys.updateJobpostes(jwtVerify.userId, req);
             }
-
             return res.status(200).json('Virksomheds brugeren er opdateret');
-        } else {
-            return res.status(500).json('Kunne ikke opdatere virksomheds bruger');
         }
+
+        return res.status(200).json('Virksomheds brugeren er opdateret');
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
-router.put('/password', async (req, res) => {
+router.put('/password', async (req, res, next) => {
     try {
         const { oldPassword, newPassword, repeatNewPassword } = req.body;
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Company user') {
-            return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan ændre adgangskode her');
+        if (jwtVerify.type !== 'Company user') {
+            const error = new Error('Ikke tilladt, kun virksomheds brugere kan ændre adgangskode her');
+            error.status = 401;
+            throw error;
         }
 
         if (!(oldPassword && newPassword && repeatNewPassword)) {
-            return res.status(400).json('Mangler felter udfyldt');
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
         }
 
         await companys.checkSentPassword(oldPassword, jwtVerify.userId);
 
-        if (newPassword != repeatNewPassword) {
-            return res.status(409).json('Nye Adgangskode felter ikke ens');
+        if (newPassword !== repeatNewPassword) {
+            const error = new Error('Nye Adgangskode felter ikke ens');
+            error.status = 409;
+            throw error;
         }
 
         //RegExp test checks if password contains one upper_case letter
@@ -248,40 +242,35 @@ router.put('/password', async (req, res) => {
         const containsNumber = /\d/.test(newPassword);
 
         if (!containsUppercase || !containsNumber) {
-            return res.status(409).json('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+            const error = new Error('Adgangskode skal indeholde mindste et stor bogstav og et tal');
+            error.status = 409;
+            throw error;
         }
 
-        let result = await companys.updatePassword(req, jwtVerify.userId);
+        await companys.updatePassword(req, jwtVerify.userId);
 
-        if (result) {
-            return res.status(200).json('Virksomheds brugers adgangskode opdateret');
-        } else {
-            return res.status(500).json('Kunne ikke opdatere adgangskoden');
-        }
+        return res.status(200).json('Virksomheds brugers adgangskode opdateret');
+
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
-router.delete('/delete', async (req, res) => {
+router.delete('/delete', async (req, res, next) => {
     try {
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Company user') {
-            return res.status(401).json('Ikke tilladt, kun virksomheds brugere kan slette profil her');
+        if (jwtVerify.type !== 'Company user') {
+            const error = new Error('Ikke tilladt, kun virksomheds brugere kan slette profil her');
+            error.status = 401;
+            throw error;
         }
 
-        let result = await companys.deleteCompanyUser(jwtVerify.userId);
-
-        if (result) {
-            return res.status(200).json('Virksomheds bruger profil er slettet');
-        } else {
-            return res.status(500).json('Virksomheds bruger kunne ikke slettes eller virksomheds bruger kunne ikke findes');
-        }
+        await companys.deleteCompanyUser(jwtVerify.userId);
+        
+        return res.status(200).json('Virksomheds bruger profil er slettet');
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 

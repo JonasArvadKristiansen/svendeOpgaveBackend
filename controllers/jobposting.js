@@ -1,74 +1,64 @@
 const db = require('../utils/DB');
 
-const allJobpostings = (req, res) => {
-    const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
-    const rowsToskip = (currentPageNumber - 1) * 10; // rows to skip
+const allJobpostings = async (req, res) => {
+    try {
+        const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
+        const rowsToSkip = (currentPageNumber - 1) * 10; // rows to skip
 
-    // query to fetch number of rows with data
-    db.query('SELECT COUNT(*) AS count FROM jobpostings', (error, countResult) => {
-        if (error) {
-            console.error(error);
-            return res.status(500).json('server ikke aktiv');
-        }
-
+        // query to fetch number of rows with data
+        const [countResult] = await db.query('SELECT COUNT(*) AS count FROM jobpostings');
+        
         // counting number of pages
-        const pageCount = Math.ceil(countResult[0].count / 10);
+        const pageCount = Math.ceil(countResult.count / 10);
 
         // query to fetch data for paginated page
-        db.query(
+        const [data] = await db.query(
             `SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings 
-        INNER JOIN companys ON jobpostings.companyID = companys.id LIMIT 10 OFFSET ?`,
-            [rowsToskip],
-            (error, data) => {
-                if (error) {
-                    console.error(error);
-                    return res.status(500).json('Kunne ikke hente jobopslagene');
-                } else {
-                    res.status(200).json({ jobpostings: data, pages: pageCount });
-                }
-            }
+            INNER JOIN companys ON jobpostings.companyID = companys.id LIMIT 10 OFFSET ?`,
+            [rowsToSkip]
         );
-    });
+
+        res.status(200).json({ jobpostings: data, pages: pageCount });
+    } catch (error) {
+        throw error;
+    }
 };
 
-const filterJobpostings = (req, res) => {
-    const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
-    const rowsToSkip = (currentPageNumber - 1) * 10; //rows to skip
+const filterJobpostings = async (req, res) => {
+    try {
+        const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
+        const rowsToSkip = (currentPageNumber - 1) * 10; //rows to skip
 
-    // query to fetch number of rows with data
-    let counterQuery = 'SELECT COUNT(*) AS count FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id';
-    let whereconditions = [];
-    let whereValues = [];
+        // query to fetch number of rows with data
+        let counterQuery = 'SELECT COUNT(*) AS count FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id';
+        let whereConditions = [];
+        let whereValues = [];
 
-    // if conditions checking if some or all query parameters are present
-    if (req.query.deadline) {
-        whereconditions.push('deadline = ?');
-        whereValues.push(req.query.deadline);
-    }
-    if (req.query.minSalary) {
-        whereconditions.push('salary >= ?');
-        whereValues.push(req.query.minSalary);
-    }
-    if (req.query.jobtype) {
-        whereconditions.push('jobtype LIKE ?');
-        whereValues.push(`%${req.query.jobtype}%`);
-    }
-    if (req.query.search) {
-        whereconditions.push('(companyName LIKE ?)');
-        whereValues.push(`%${req.query.search}%`);
-    }
-
-    // adding the WHERE clause if there are conditions
-    if (whereconditions.length > 0) {
-        counterQuery += ' WHERE ' + whereconditions.join(' AND ');
-    }
-
-    // query to fetch number of rows with data
-    db.query(counterQuery, whereValues, (error, countResult) => {
-        if (error) {
-            console.error(error);
-            return res.status(500).json('server ikke aktiv');
+        // if conditions checking if some or all query parameters are present
+        if (req.query.deadline) {
+            whereConditions.push('deadline = ?');
+            whereValues.push(req.query.deadline);
         }
+        if (req.query.minSalary) {
+            whereConditions.push('salary >= ?');
+            whereValues.push(req.query.minSalary);
+        }
+        if (req.query.jobtype) {
+            whereConditions.push('jobtype LIKE ?');
+            whereValues.push(`%${req.query.jobtype}%`);
+        }
+        if (req.query.search) {
+            whereConditions.push('(companyName LIKE ?)');
+            whereValues.push(`%${req.query.search}%`);
+        }
+
+        // adding the WHERE clause if there are conditions
+        if (whereConditions.length > 0) {
+            counterQuery += ' WHERE ' + whereConditions.join(' AND ');
+        }
+
+        // query to fetch number of rows with data
+        const [countResult] = await db.query(counterQuery, whereValues);
 
         // counting number of pages
         const pageCount = Math.ceil(countResult[0].count / 10);
@@ -79,8 +69,8 @@ const filterJobpostings = (req, res) => {
         INNER JOIN companys ON jobpostings.companyID = companys.id`;
 
         // adding the WHERE clause if there are conditions
-        if (whereconditions.length > 0) {
-            filterQuery += ' WHERE ' + whereconditions.join(' AND ');
+        if (whereConditions.length > 0) {
+            filterQuery += ' WHERE ' + whereConditions.join(' AND ');
         }
 
         // adding order by clause based on newestJobpost
@@ -96,146 +86,180 @@ const filterJobpostings = (req, res) => {
         filterQuery += ' LIMIT 10 OFFSET ?';
 
         // query to fetch data for paginated page and ... spread operator is used to copy one a array to a new one
-        db.query(filterQuery, [...whereValues, rowsToSkip], (error, data) => {
-            if (error) {
-                console.error(error);
-                return res.status(500).json('Kunne ikke flitrere jobopslagene');
-            } else {
-                res.status(200).json({ jobpostings: data, pages: pageCount, url: req.originalUrl });
-            }
-        });
-    });
+        const [data] = await db.query(filterQuery, [...whereValues, rowsToSkip]);
+
+        res.status(200).json({ jobpostings: data, pages: pageCount, url: req.originalUrl });
+    } catch (error) {
+        throw error;
+    }
 };
 
-const jobposting = (req, res) => {
-    const { jobpostingId } = req.query;
 
-    db.query(
-        'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName, companys.companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
-        [jobpostingId],
-        (error, data) => {
-            if (error) {
-                console.error(error);
-                return res.status(500).json('Kunne ikke hente jobopslag');
-            } else {
-                return res.status(200).json({ jobposting: data });
-            }
-        }
-    );
+const jobposting = async (req, res) => {
+    try {
+        const { jobpostingId } = req.query;
+
+        const [data] = await db.query(
+            'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName, companys.companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
+            [jobpostingId]
+        );
+
+        res.status(200).json({ jobposting: data });
+    } catch (error) {
+        throw error;
+    }
 };
 
 // for creating a jobpost
-const createJobposting = (req, companyID) => {
-    const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
-    return new Promise((resolve, reject) => {
-        db.query('SELECT address, city, phonenumber, email FROM companys WHERE id = ?', companyID, (error, data) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'Kunne ikke hente virksomheds brugeren' });
-            } else {
-                db.query(
-                    'INSERT INTO jobpostings (title, DESCRIPTION, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [title, DESCRIPTION, deadline, jobtype, companyID, data[0].address, data[0].city, data[0].phonenumber, data[0].email, salary],
-                    (error, data) => {
-                        if (error) {
-                            reject({ error: error, errorMessage: 'Kunne ikke oprette jobopslag' });
-                        } else {
-                            resolve(true);
-                        }
-                    }
-                );
-            }
-        });
-    });
+const createJobposting = async (req, companyID) => {
+    try {
+        const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
+
+        // Fetch company details from the database
+        const [companyData] = await db.query('SELECT address, city, phonenumber, email FROM companys WHERE id = ?', companyID);
+        if (!companyData || companyData.length === 0) {
+            const error = new Error('Kunne ikke finde virksomheds bruger');
+            error.status = 404;
+            throw error;
+        }
+
+        // Insert jobposting into the database
+        await db.query(
+            'INSERT INTO jobpostings (title, DESCRIPTION, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [title, DESCRIPTION, deadline, jobtype, companyID, companyData[0].address, companyData[0].city, companyData[0].phonenumber, companyData[0].email, salary]
+        );
+
+        return true; // Jobposting created successfully
+    } catch (error) {
+        throw error;
+    }
 };
 
 // for updating a jobpost information
-const updateJobposting = (req) => {
-    let updateQuery = 'UPDATE jobpostings SET ';
+const updateJobposting = async (req) => {
+    try {
+        const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
 
-    const fieldsForUpdates = [];
-    const valuesForQuery = [];
+        if (!jobpostingId) {
+            const error = new Error('Job posting ID is required');
+            error.status = 400;
+            throw error;
+        }
 
-    if (req.body.title !== undefined && req.body.title !== null) {
-        fieldsForUpdates.push('title = ?');
-        valuesForQuery.push(req.body.title);
-    }
+        // Build the update query
+        let updateQuery = 'UPDATE jobpostings SET ';
+        const fieldsForUpdates = [];
+        const valuesForQuery = [];
 
-    if (req.body.DESCRIPTION !== undefined && req.body.DESCRIPTION !== null) {
-        fieldsForUpdates.push('DESCRIPTION = ?');
-        valuesForQuery.push(req.body.DESCRIPTION);
-    }
+        if (title !== undefined && title !== null) {
+            fieldsForUpdates.push('title = ?');
+            valuesForQuery.push(title);
+        }
 
-    if (req.body.deadline !== undefined && req.body.deadline !== null) {
-        fieldsForUpdates.push('deadline = ?');
-        valuesForQuery.push(req.body.deadline);
-    }
+        if (DESCRIPTION !== undefined && DESCRIPTION !== null) {
+            fieldsForUpdates.push('DESCRIPTION = ?');
+            valuesForQuery.push(DESCRIPTION);
+        }
 
-    if (req.body.jobtype !== undefined && req.body.jobtype !== null) {
-        fieldsForUpdates.push('jobtype = ?');
-        valuesForQuery.push(req.body.jobtype);
-    }
+        if (deadline !== undefined && deadline !== null) {
+            fieldsForUpdates.push('deadline = ?');
+            valuesForQuery.push(deadline);
+        }
 
-    if (req.body.salary !== undefined && req.body.salary !== null) {
-        fieldsForUpdates.push('salary = ?');
-        valuesForQuery.push(req.body.salary);
-    }
+        if (jobtype !== undefined && jobtype !== null) {
+            fieldsForUpdates.push('jobtype = ?');
+            valuesForQuery.push(jobtype);
+        }
 
-    //joining updateQuery with conditions that needs to be updated
-    updateQuery += fieldsForUpdates.join(', ');
-    updateQuery += ' WHERE id = ?';
+        if (salary !== undefined && salary !== null) {
+            fieldsForUpdates.push('salary = ?');
+            valuesForQuery.push(salary);
+        }
 
-    valuesForQuery.push(req.body.jobpostingId);
+        if (fieldsForUpdates.length === 0) {
+            const error = new Error('No fields to update');
+            error.status = 400;
+            throw error;
+        }
 
-    return new Promise((resolve, reject) => {
-        db.query(updateQuery, valuesForQuery, (error, result) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'kunne ikke opdatere jobopslag' });
+        // Join updateQuery with conditions that need to be updated
+        updateQuery += fieldsForUpdates.join(', ');
+        updateQuery += ' WHERE id = ?';
+
+        valuesForQuery.push(jobpostingId);
+
+        // Executing the update query
+        const [result] = await db.query(updateQuery, valuesForQuery);
+
+        // Check if rows were affected and/or changed
+        if (result.affectedRows > 0) {
+            if (result.changedRows > 0) {
+                return true;
             } else {
-                resolve(true);
+                const error = new Error('Ingenting at opdatere på jobopslaget');
+                error.status = 409;
+                throw error;
             }
-        });
-    });
+        } else {
+            const error = new Error('Ingen jobopslag at opdatere på dette id');
+            error.status = 404;
+            throw error;
+        }
+    } catch (error) {
+        throw error;
+    }
 };
 
 // for updating a counter in a company user
-const plusCompanyJobpostingCount = (companyID) => {
-    return new Promise((resolve, reject) => {
-        db.query('UPDATE companys SET jobpostingCount = jobpostingCount + 1 WHERE id = ?', companyID, (error, result) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'kunne ikke opdatere virksomheds brugerens jobopslag tæller' });
-            } else {
-                resolve(true);
-            }
-        });
-    });
+const plusCompanyJobpostingCount = async (companyID) => {
+    try {
+        const [result] = await db.query('UPDATE companys SET jobpostingCount = jobpostingCount + 1 WHERE id = ?', companyID);
+        
+        if (result.affectedRows > 0) {
+            return true;    
+        } else {
+            const error = new Error('Kunne ikke opdatere jobopslag tæller for virksomheds bruger');
+            error.status = 409;
+            throw error;
+        }
+    } catch (error) {
+        throw error;
+    }
 };
 
+
 // for updating a counter in a company user
-const minusCompanyJobpostingCount = (companyID) => {
-    return new Promise((resolve, reject) => {
-        db.query('UPDATE companys SET jobpostingCount = jobpostingCount - 1 WHERE id = ?', companyID, (error, result) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'kunne ikke opdatere virksomheds brugerens jobopslag tæller' });
-            } else {
-                resolve(true);
-            }
-        });
-    });
+const minusCompanyJobpostingCount = async (companyID) => {
+    try {
+        const [result] = await db.query('UPDATE companys SET jobpostingCount = jobpostingCount - 1 WHERE id = ?', companyID);
+        
+        if (result.affectedRows > 0) {
+            return true;    
+        } else {
+            const error = new Error('Kunne ikke opdatere jobopslag tæller for virksomheds bruger');
+            error.status = 409;
+            throw error;
+        }
+    } catch (error) {
+        throw error;
+    }
 };
 
 // for deleting a jobpost
-const deleteJobposting = (jobpostingId) => {
-    return new Promise((resolve, reject) => {
-        db.query('DELETE from jobpostings WHERE id = ?', jobpostingId, (error, result) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'kunne ikke slette jobopslag' });
-            } else if (result.affectedRows > 0) {
-                resolve(true);
-            } else {
-                reject({ error: error, errorMessage: 'Ingen jobopslag fundet' });
-            }
-        });
-    });
+const deleteJobposting = async (jobpostingId) => {
+    try {
+        const [result] = await db.query('DELETE from jobpostings WHERE id = ?', jobpostingId);
+        
+        if (result.affectedRows > 0) {
+            return true;    
+        } else {
+            const error = new Error('Ingen jobopslag fundet');
+            error.status = 404;
+            throw error;
+        }
+    } catch (error) {
+        throw error;
+    }
 };
 
 module.exports = {

@@ -2,132 +2,137 @@ const router = require('express').Router();
 const jobpostings = require('../controllers/jobposting');
 const jwt = require('../utils/jwt');
 
-router.get('/all', async (req, res) => {
-    jobpostings.allJobpostings(req, res);
-});
-
-router.get('/filter', async (req, res) => {
-    const { deadline, minSalary, jobtype, search } = req.query;
-
-    if (!(deadline || minSalary || jobtype || search)) {
-        return res.status(400).json('Mindst et filter skal være udfyldt');
+router.get('/all', async (req, res, next) => {
+    try {
+        await jobpostings.allJobpostings(req, res);
+    } catch (error) {
+        next(error);
     }
-
-    jobpostings.filterJobpostings(req, res);
 });
 
-router.get('/info', async (req, res) => {
+router.get('/filter', async (req, res, next) => {
+    try {
+        const { deadline, minSalary, jobtype, search } = req.query;
+
+        if (!(deadline || minSalary || jobtype || search)) {
+            const error = new Error('Mindst et filter skal være udfyldt');
+            error.status = 400;
+            throw error;
+        }
+
+        await jobpostings.filterJobpostings(req, res);
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/info', async (req, res, next) => {
     try {
         const { jobpostingId } = req.query;
 
         if (!jobpostingId) {
-            return res.status(400).json('jobpostingId mangler');
+            const error = new Error('jobpostingId mangler');
+            error.status = 400;
+            throw error;
         }
 
-        const jwtVerify = await jwt.verifyToken(req);
+        await jwt.verifyToken(req);
 
-        if (jwtVerify) {
-            jobpostings.jobposting(req, res);
-        }
+        await jobpostings.jobposting(req, res);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
-router.post('/create', async (req, res) => {
+router.post('/create', async (req, res, next) => {
     try {
         const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
 
         if (!(title && DESCRIPTION && deadline && jobtype && salary)) {
-            return res.status(400).json('Mangler felter udfyldt');
-        }
-
-        let jwtVerify = await jwt.verifyToken(req);
-
-        if (jwtVerify.type != 'Company user') {
-            return res.status(401).json('Ikke tilladt at lave jobopslag. skift til virksomheds bruger for at oprette opslag');
-        }
-
-        let result = await jobpostings.createJobposting(req, jwtVerify.userId);
-
-        if (result) {
-            let jobposting = await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId);
-            if (jobposting) {
-                return res.status(200).json('Jobopslag oprettet');
-            } else {
-                return res.status(200).json('Jobopslag oprettet, men kunne ikke opdatere virksomheds brugerens jobopslag tæller');
-            }
-        } else {
-            return res.status(500).json('Jobopslag kunne ikke oprettes');
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
-    }
-});
-
-router.put('/update', async (req, res) => {
-    try {
-        const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
-
-        if (!jobpostingId) {
-            return res.status(400).json('Mangler jobpostingId udfyldt');
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
         }
 
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Company user') {
-            return res.status(401).json('Ikke tilladt, kun Virksomheds brugers kan ændre opslag');
+        if (jwtVerify.type !== 'Company user') {
+            const error = new Error('Ikke tilladt at lave jobopslag. skift til virksomheds bruger for at oprette opslag');
+            error.status = 401;
+            throw error;
         }
 
-        if (!(title || DESCRIPTION || deadline || jobtype || salary)) {
-            return res.status(400).json('Mindst et felt skal være udfyldt');
-        }
-
-        let result = await jobpostings.updateJobposting(req);
-
-        if (result) {
-            return res.status(200).json('Jobopslag opdateret');
-        } else {
-            return res.status(500).json('Kunne ikke opdatere jobopslag');
-        }
+        await jobpostings.createJobposting(req, jwtVerify.userId);
+        await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId);
+            
+        return res.status(200).json('Jobopslag oprettet');
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
-router.delete('/delete', async (req, res) => {
+router.put('/update', async (req, res, next) => {
+    try {
+        const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
+
+        if (!jobpostingId) {
+            const error = new Error('Mangler jobpostingId udfyldt');
+            error.status = 400;
+            throw error;
+        }
+
+        const jwtVerify = await jwt.verifyToken(req);
+
+        if (jwtVerify.type !== 'Company user') {
+            const error = new Error('Ikke tilladt, kun Virksomheds brugers kan ændre opslag');
+            error.status = 401;
+            throw error;
+        }
+
+        if (!(title || DESCRIPTION || deadline || jobtype || salary)) {
+            const error = new Error('Mindst et felt skal være udfyldt');
+            error.status = 400;
+            throw error;
+        }
+
+        await jobpostings.updateJobposting(req);
+
+        return res.status(200).json('Jobopslag opdateret');
+        
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.delete('/delete', async (req, res, next) => {
     try {
         const { jobpostingId } = req.body;
 
         if (!jobpostingId) {
-            return res.status(400).json('Mangler jobpostingId udfyldt');
+            const error = new Error('Mangler jobpostingId udfyldt');
+            error.status = 400;
+            throw error;
         }
 
-        let jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Company user') {
-            return res.status(401).json('Ikke tilladt, kun Virksomheds brugers kan slette opslag');
+        if (jwtVerify.type !== 'Company user') {
+            const error = new Error('Ikke tilladt, kun Virksomheds brugers kan slette opslag');
+            error.status = 401;
+            throw error;
         }
 
-        let result = await jobpostings.deleteJobposting(jobpostingId);
+        const result = await jobpostings.deleteJobposting(jobpostingId);
 
         if (result) {
-            let jobposting = await jobpostings.minusCompanyJobpostingCount(jwtVerify.userId);
-            if (jobposting) {
-                return res.status(200).json('Jobopslag slettet');
-            } else {
-                return res.status(200).json('Jobopslag slettet, men kunne ikke opdatere virksomheds brugers jobopslag tæller');
-            }
-        } else {
-            return res.status(500).json('Jobopslag kunne ikke slettes');
+            await jobpostings.minusCompanyJobpostingCount(jwtVerify.userId);
+
+            return res.status(200).json('Jobopslag slettet');
         }
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
+
 
 module.exports = router;

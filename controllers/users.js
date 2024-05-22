@@ -23,26 +23,24 @@ const login = async (req) => {
     const { email, password } = req.body;
 
     try {
-        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', email);
+        const [data] = await db.query('SELECT * FROM users WHERE email = ?', email);
 
-        if (rows.length > 0) {
-            // tjekking if typed password match hashed password from database
-            const passwordMatched = bcrypt.compareSync(password, rows[0].password);
-
-            //passwordMatched return true if they match
-            if (passwordMatched) {
-                const userType = rows[0].isAdmin === 1 ? 'Admin' : 'Normal user';
-                return {user: { id: rows[0].id, type: userType } };
-            } else {
-                const error = new Error('Adgangskode eller email forkert');
-                error.status = 401;
-                throw error;
-            }
-        } else {
+        if (data.length === 0) {
             const error = new Error('Ingen bruger fundet');
             error.status = 404;
             throw error;
         }
+
+        const passwordhashed = bcrypt.compareSync(password, data[0].password);
+
+        if (!passwordhashed) {
+            const error = new Error('Adgangskode forkert');
+            error.status = 401;
+            throw error;
+        }
+
+        const userType = data[0].isAdmin === 1 ? 'Admin' : 'Normal user'; // ternary operator if else
+        return {user: { id: data[0].id, type: userType } };
     } catch (error) {
         throw error;
     }
@@ -154,13 +152,19 @@ const update = async (req, userId) => {
 
         const [result] = await db.query(updateQuery, valuesForQuery);
 
-        if (result.affectedRows === 0) {
-            const error = new Error('Kunne ikke opdatere bruger');
+        if (result.affectedRows > 0) {
+            if (result.changedRows > 0) {
+                return true;
+            } else {
+                const error = new Error('Ingenting at opdatere på bruger');
+                error.status = 409;
+                throw error;
+            }
+        } else {
+            const error = new Error('Ingen bruger at opdatere på dette id');
             error.status = 404;
             throw error;
         }
-
-        return true;
     } catch (error) {
         throw error;
     }

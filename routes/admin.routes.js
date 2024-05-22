@@ -2,121 +2,112 @@ const router = require('express').Router();
 const admin = require('../controllers/admin');
 const jwt = require('../utils/jwt');
 
-router.get('/statistikData', async (req, res) => {
+router.get('/statistikData', async (req, res, next) => {
     try {
-        let jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Admin') {
-            return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+        if (jwtVerify.type !== 'Admin') {
+            const error = new Error('Ikke tilladt at se info. Kun admin har tilladelse');
+            error.status = 401;
+            throw error;
         }
 
-        admin.allData(req, res);
+        await admin.allData(req, res);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
-router.get('/allBannedEmails', async (req, res) => {
+router.get('/allBannedEmails', async (req, res, next) => {
     try {
-        let jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Admin') {
-            return res.status(401).json('Ikke tilladt at se info. Kun admin har tilladelse');
+        if (jwtVerify.type !== 'Admin') {
+            const error = new Error('Ikke tilladt at se info. Kun admin har tilladelse');
+            error.status = 401;
+            throw error;
         }
 
-        admin.getAllBannedEmails(req, res);
+        await admin.getAllBannedEmails(req, res);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
-router.post('/banEmail', async (req, res) => {
+router.post('/banEmail', async (req, res, next) => {
     try {
         const { email } = req.body;
 
         if (!email) {
-            return res.status(400).json('email mangler');
+            const error = new Error('email mangler');
+            error.status = 400;
+            throw error;
         }
 
-        let jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Admin') {
-            return res.status(401).json('Ikke tilladt at ban. Kun admin har tilladelse');
+        if (jwtVerify.type !== 'Admin') {
+            const error = new Error('Ikke tilladt at ban. Kun admin har tilladelse');
+            error.status = 401;
+            throw error;
         }
 
-        let checkEmail = await admin.bannedEmailCheck(email);
+        await admin.bannedEmailCheck(email);
+        await admin.banEmail(email);
 
-        if (checkEmail) {
-            let result = await admin.banEmail(email);
-
-            if (result) {
-                return res.status(200).json('Email kan længere bruges på siden');
-            } else {
-                return res.status(500).json('Server fejl. Kunne ikke forbyde email');
-            }
-        } else {
-            return res.status(409).json('Ban email eksitere allerede');
-        }
+        return res.status(200).json('Email kan længere bruges på siden og brugerne med denne email er fjernet');
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
-router.delete('/deleteUser', async (req, res) => {
+router.delete('/deleteUser', async (req, res, next) => {
     try {
-        const { userId } = req.body;
+        const { email } = req.body;
 
-        if (!userId) {
-            return res.status(400).json('userId mangler');
+        if (!email) {
+            const error = new Error('email mangler');
+            error.status = 400;
+            throw error;
         }
 
-        let jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Admin') {
+        if (jwtVerify.type !== 'Admin') {
             return res.status(401).json('Ikke tilladt at slette brugere. Kun admin har tilladelse');
         }
 
-        let result = await admin.deleteUser(req.body.userId);
+        await admin.deleteUser(email);
 
-        if (result) {
-            return res.status(200).json('Brugerens profil er slettet');
-        } else {
-            return res.status(500).json('Brugerens profil kunne ikke slettes eller brugerens profil kunne ikke findes');
-        }
+        return res.status(200).json('Brugerens profil er slettet');
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
 
-router.delete('/deleteCompany', async (req, res) => {
+router.delete('/deleteCompany', async (req, res, next) => {
     try {
-        const { companyId } = req.body;
+        const { email } = req.body;
 
-        if (!companyId) {
-            return res.status(400).json('companyId mangler');
+        if (!email) {
+            const error = new Error('email mangler');
+            error.status = 400;
+            throw error;
         }
 
-        let jwtVerify = await jwt.verifyToken(req);
+        const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Admin') {
+        if (jwtVerify.type !== 'Admin') {
             return res.status(401).json('Ikke tilladt at slette virksomheds brugere. Kun admin har tilladelse');
         }
 
-        let result = await admin.deleteCompany(req.body.companyId);
+        await admin.deleteCompany(email);
 
-        if (result.success) {
-            return res.status(200).json('Virksomheds bruger profil er slettet');
-        } else {
-            return res.status(500).json('Virksomheds brugeren kunne ikke slettes eller virksomheds brugeren kunne ikke findes');
-        }
+        return res.status(200).json('Virksomheds bruger profil er slettet');
     } catch (error) {
-        console.error(error);
-        return res.status(500).json(error.errorMessage);
+        next(error);
     }
 });
+
 
 module.exports = router;

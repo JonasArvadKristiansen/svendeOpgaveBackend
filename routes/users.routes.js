@@ -206,7 +206,7 @@ router.put('/update', async (req, res, next) => {
         const { fullName, email, phonenumber } = req.body;
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Normal user') {
+        if (jwtVerify.type !== 'Normal user') {
             const error = new Error('Ikke tilladt, kun jobsøgere kan ændre profil her');
             error.status = 401;
             throw error;
@@ -236,11 +236,10 @@ router.put('/update', async (req, res, next) => {
             }
         }
 
-        const result = await users.update(req, jwtVerify.userId);
+        await users.update(req, jwtVerify.userId);
         
         return res.status(200).json('Brugeren opdateret');
     } catch (error) {
-        console.error(error);
         next(error)
     }
 });
@@ -250,7 +249,7 @@ router.put('/password', async (req, res, next) => {
         const { oldPassword, newPassword, repeatNewPassword } = req.body;
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Normal user' && jwtVerify.type != 'Admin') {
+        if (jwtVerify.type !== 'Normal user' && jwtVerify.type !== 'Admin') {
             const error = new Error('Ikke tilladt, kun jobsøgere og admin kan opdatere adgangskode her');
             error.status = 401;
             throw error;
@@ -262,13 +261,7 @@ router.put('/password', async (req, res, next) => {
             throw error;
         }
 
-        const verifyOldPassword = await users.checkSentPassword(oldPassword, jwtVerify.userId);
-
-        if (!verifyOldPassword) {
-            const error = new Error('Gamle adgangskode ikke rigtig');
-            error.status = 409;
-            throw error;
-        }
+        await users.checkSentPassword(oldPassword, jwtVerify.userId);
 
         if (newPassword !== repeatNewPassword) {
             const error = new Error('Nye Adgangskode felter ikke ens');
@@ -292,7 +285,6 @@ router.put('/password', async (req, res, next) => {
         
         return res.status(200).json('Brugerens adgangskode opdateret');
     } catch (error) {
-        console.error(error);
         next(error)
     }
 });
@@ -301,17 +293,16 @@ router.delete('/delete', async (req, res, next) => {
     try {
         const jwtVerify = await jwt.verifyToken(req);
 
-        if (jwtVerify.type != 'Normal user') {
+        if (jwtVerify.type !== 'Normal user') {
             const error = new Error('Ikke tilladt, kun jobsøgere kan slette profil her');
             error.status = 401;
             throw error;
         }
 
-        const result = await users.deleteUser(jwtVerify.userId);
+        await users.deleteUser(jwtVerify.userId);
 
         return res.status(200).json('Brugerens profil er slettet');
     } catch (error) {
-        console.error(error);
         next(error)
     }
 });

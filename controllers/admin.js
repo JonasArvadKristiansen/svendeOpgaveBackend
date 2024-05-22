@@ -1,117 +1,96 @@
 const db = require('../utils/DB');
 
-const allData = (req, res) => {
-    //promise all makes it so that if all is success it will send the data to frontend, but if one fails it returns error
-    Promise.all([
-        new Promise((resolve, reject) => {
-            db.query('SELECT COUNT(*) AS count FROM companys', (error, result) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(result[0].count);
-                }
-            });
-        }),
-        new Promise((resolve, reject) => {
-            db.query('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 0', (error, result) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(result[0].count);
-                }
-            });
-        }),
-        new Promise((resolve, reject) => {
-            db.query('SELECT COUNT(*) AS count FROM jobpostings', (error, result) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(result[0].count);
-                }
-            });
-        }),
-    ])
-        .then(([companyCount, usersCount, jobpostingCount]) => {
-            return res.status(200).json({ countOfcompanys: companyCount, countOfUser: usersCount, countOfJobpostings: jobpostingCount });
-        })
-        .catch((error) => {
-            console.error(error);
-            return res.status(500).json('Kunne ikke hente statistik data');
-        });
+const allData = async (req, res) => {
+    try {
+        const [companyCount] = await db.query('SELECT COUNT(*) AS count FROM companys');
+        const [usersCount] = await db.query('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 0');
+        const [jobpostingCount] = await db.query('SELECT COUNT(*) AS count FROM jobpostings');
+
+        return res.status(200).json({ countOfcompanys: companyCount[0].count, countOfUser: usersCount[0].count, countOfJobpostings: jobpostingCount[0].count });
+    } catch (error) {
+        throw error;
+    }
 };
 
 // for getting all banned emails
-const getAllBannedEmails = (req, res) => {
-    db.query('SELECT email FROM bannedEmails', (error, data) => {
-        if (error) {
-            console.error(error);
-            res.status(500).json('Kunne ikke hente ban emails');
-        } else {
-            return res.status(200).json({ emails: data });
-        }
-    });
+const getAllBannedEmails = async (req, res) => {
+    try {
+        const [result] = await db.query('SELECT email FROM bannedEmails');
+        
+        res.status(200).json({ emails: result });
+    } catch (error) {
+        throw error;
+    }
 };
 
 // this is used to check if email is already banned
-const bannedEmailCheck = (email) => {
-    return new Promise((resolve, reject) => {
-        db.query('SELECT * FROM bannedEmails WHERE email = ?', email, (error, data) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'Kunne ikke tjekke ban email' });
-            } else {
-                if (data.length > 0) {
-                    reject({ errorMessage: 'Ban email eksitere allerede' });
-                } else {
-                    resolve(true);
-                }
-            }
-        });
-    });
+const bannedEmailCheck = async (email) => {
+    try {
+        const [result] = await db.query('SELECT * FROM bannedEmails WHERE email = ?', email);
+        
+        if (result.length > 0) {
+            const error = new Error('Ban email eksitere allerede');
+            error.status = 409;
+            throw error;
+        } else {
+            return true;
+        }
+    } catch (error) {
+        throw error;
+    }
 };
 
 // for ban a email from use
-const banEmail = (email) => {
-    return new Promise((resolve, reject) => {
-        db.query('INSERT INTO bannedEmails (email) VALUES (?)', email, (error, result) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'Kunne ikke ban email' });
-            } else if (result.affectedRows == 0) {
-                reject({ errorMessage: 'Kunne ikke ban email' });
-            } else {
-                resolve(true);
-            }
-        });
-    });
+const banEmail = async (email) => {
+    try {
+        const [result] = await db.query('INSERT INTO bannedEmails (email) VALUES (?)', email);
+        
+        if (result.affectedRows === 0) {
+            const error = new Error('Kunne ikke indsætte ban email');
+            error.status = 409;
+            throw error;
+        } else {
+            await db.query('DELETE from users WHERE email = ?', email);
+            await db.query('DELETE from companys WHERE email = ?', email);
+            return true;
+        }
+    } catch (error) {
+        throw error;
+    }
 };
 
 // for deleting a user with admin permissions
-const deleteUser = (userId) => {
-    return new Promise((resolve, reject) => {
-        db.query('DELETE from users WHERE id = ?', userId, (error, result) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'Brugerens profil kunne ikke slettes eller brugerens profil kunne ikke findes' });
-            } else if (result.affectedRows == 0) {
-                reject({ errorMessage: 'Brugerens profil kunne ikke slettes eller brugerens profil kunne ikke findes' });
-            } else {
-                resolve(true);
-            }
-        });
-    });
+const deleteUser = async (email) => {
+    try {
+        const [result] = await db.query('DELETE from users WHERE email = ?', email);
+        
+        if (result.affectedRows === 0) {
+            const error = new Error('Brugerens profil kunne ikke slettes eller brugerens profil kunne ikke findes');
+            error.status = 404;
+            throw error;
+        } else {
+            return true;
+        }
+    } catch (error) {
+        throw error;
+    }
 };
 
 // for deleting a company with admin permissions
-const deleteCompany = (companyId) => {
-    return new Promise((resolve, reject) => {
-        db.query('DELETE from companys WHERE id = ?', companyId, (error, result) => {
-            if (error) {
-                reject({ error: error, errorMessage: 'Virksomheds brugeren kunne ikke slettes eller virksomheds brugeren kunne ikke findes' });
-            } else if (result.affectedRows == 0) {
-                reject({ errorMessage: 'Virksomheds brugeren kunne ikke slettes eller virksomheds brugeren kunne ikke findes' });
-            } else {
-                resolve({ success: true });
-            }
-        });
-    });
+const deleteCompany = async (email) => {
+    try {
+        const [result] = await db.query('DELETE from companys WHERE email = ?', email);
+        
+        if (result.affectedRows === 0) {
+            const error = new Error('Virksomheds brugeren kunne ikke slettes eller virksomheds brugeren kunne ikke findes');
+            error.status = 404;
+            throw error;
+        } else {
+            return { success: true };
+        }
+    } catch (error) {
+        throw error;
+    }
 };
 
 module.exports = {
