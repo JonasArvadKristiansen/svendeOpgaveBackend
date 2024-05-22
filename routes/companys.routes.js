@@ -2,14 +2,18 @@ const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
 const rateLimit = require('express-rate-limit');
-const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, handler: (req, res) => {
-    res.status(429).json({ message: 'Too many login attempts, please try again later.' });
-} });
+const loginLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    handler: (req, res) => {
+        res.status(429).json({ message: 'Too many login attempts, please try again later.' });
+    },
+});
 
 router.get('/all', async (req, res, next) => {
     try {
         await companys.allCompanys(req, res);
-    } catch(error) {
+    } catch (error) {
         next(error);
     }
 });
@@ -30,7 +34,6 @@ router.get('/filter', async (req, res, next) => {
     }
 });
 
-
 router.get('/profile', async (req, res, next) => {
     try {
         const { companyID } = req.query;
@@ -42,7 +45,7 @@ router.get('/profile', async (req, res, next) => {
         }
 
         await jwt.verifyToken(req);
-        
+
         await companys.profile(req, res);
     } catch (error) {
         next(error); // Pass the error to the central error handler
@@ -100,7 +103,21 @@ router.post('/create', async (req, res, next) => {
         } = req.body;
 
         // Checking if required fields are provided
-        if (!(companyName && password && repeatPassword && companyDescription && address && city && phonenumber && email && numberOfEmployees && cvrNumber && jobtypes)) {
+        if (
+            !(
+                companyName &&
+                password &&
+                repeatPassword &&
+                companyDescription &&
+                address &&
+                city &&
+                phonenumber &&
+                email &&
+                numberOfEmployees &&
+                cvrNumber &&
+                jobtypes
+            )
+        ) {
             const error = new Error('Mangler felter udfyldt');
             error.status = 400;
             throw error;
@@ -115,7 +132,7 @@ router.post('/create', async (req, res, next) => {
 
         // RegExp test checks if password contains one upper_case letter
         const containsUppercase = /[A-Z]/.test(password);
-        
+
         // RegExp test Checks if the password contains at least one number
         const containsNumber = /\d/.test(password);
 
@@ -250,7 +267,6 @@ router.put('/password', async (req, res, next) => {
         await companys.updatePassword(req, jwtVerify.userId);
 
         return res.status(200).json('Virksomheds brugers adgangskode opdateret');
-
     } catch (error) {
         next(error);
     }
@@ -267,7 +283,7 @@ router.delete('/delete', async (req, res, next) => {
         }
 
         await companys.deleteCompanyUser(jwtVerify.userId);
-        
+
         return res.status(200).json('Virksomheds bruger profil er slettet');
     } catch (error) {
         next(error);

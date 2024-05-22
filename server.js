@@ -16,7 +16,7 @@ app.use('/api/admin', admin);
 app.use('/api/company', companys);
 app.use('/api/jobpost', jobpostings);
 
-// Centralized error handling middleware. More readable and maintainable 
+// Centralized error handling middleware. More readable and maintainable
 app.use((error, req, res, next) => {
     console.error(error);
     res.status(error.status || 500).json(error.message);

@@ -6,7 +6,7 @@ const allData = async (req, res) => {
         const [usersCount] = await db.query('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 0');
         const [jobpostingCount] = await db.query('SELECT COUNT(*) AS count FROM jobpostings');
 
-        return res.status(200).json({ countOfcompanys: companyCount[0].count, countOfUser: usersCount[0].count, countOfJobpostings: jobpostingCount[0].count });
+        return res.status(200).json({ Companys: companyCount[0].count, Users: usersCount[0].count, Jobpostings: jobpostingCount[0].count });
     } catch (error) {
         throw error;
     }
@@ -16,7 +16,7 @@ const allData = async (req, res) => {
 const getAllBannedEmails = async (req, res) => {
     try {
         const [result] = await db.query('SELECT email FROM bannedEmails');
-        
+
         res.status(200).json({ emails: result });
     } catch (error) {
         throw error;
@@ -27,7 +27,7 @@ const getAllBannedEmails = async (req, res) => {
 const bannedEmailCheck = async (email) => {
     try {
         const [result] = await db.query('SELECT * FROM bannedEmails WHERE email = ?', email);
-        
+
         if (result.length > 0) {
             const error = new Error('Ban email eksitere allerede');
             error.status = 409;
@@ -44,7 +44,7 @@ const bannedEmailCheck = async (email) => {
 const banEmail = async (email) => {
     try {
         const [result] = await db.query('INSERT INTO bannedEmails (email) VALUES (?)', email);
-        
+
         if (result.affectedRows === 0) {
             const error = new Error('Kunne ikke indsætte ban email');
             error.status = 409;
@@ -63,7 +63,7 @@ const banEmail = async (email) => {
 const deleteUser = async (email) => {
     try {
         const [result] = await db.query('DELETE from users WHERE email = ?', email);
-        
+
         if (result.affectedRows === 0) {
             const error = new Error('Brugerens profil kunne ikke slettes eller brugerens profil kunne ikke findes');
             error.status = 404;
@@ -80,7 +80,7 @@ const deleteUser = async (email) => {
 const deleteCompany = async (email) => {
     try {
         const [result] = await db.query('DELETE from companys WHERE email = ?', email);
-        
+
         if (result.affectedRows === 0) {
             const error = new Error('Virksomheds brugeren kunne ikke slettes eller virksomheds brugeren kunne ikke findes');
             error.status = 404;

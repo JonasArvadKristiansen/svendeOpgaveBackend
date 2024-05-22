@@ -13,10 +13,12 @@ const allCompanys = async (req, res) => {
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // Query to fetch data for paginated page
-        const [companysData] = await db.query('SELECT id, companyName, companyDescription, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [rowsToSkip]);
-        
+        const [companysData] = await db.query('SELECT id, companyName, companyDescription, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [
+            rowsToSkip,
+        ]);
+
         res.status(200).json({ companys: companysData, pages: pageCount });
-    } catch(error) {
+    } catch (error) {
         throw error; // Passes error to the central error handler
     }
 };
@@ -70,9 +72,15 @@ const profile = async (req, res) => {
     const { companyID } = req.query;
 
     try {
-        const [companyProfileData] = await db.query('SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',[companyID]);
-        const [jobpostingsData] = await db.query('SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',[companyID, rowsToSkip]);
-        const [pageCountData] = await db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?',[companyID]);
+        const [companyProfileData] = await db.query(
+            'SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
+            [companyID]
+        );
+        const [jobpostingsData] = await db.query(
+            'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
+            [companyID, rowsToSkip]
+        );
+        const [pageCountData] = await db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', [companyID]);
 
         if (!companyProfileData.length) {
             const error = new Error('Ingen virksomheds bruger fundet');
@@ -93,8 +101,14 @@ const getCompanyInfo = async (companyID, req, res) => {
     const rowsToSkip = (currentPageNumber - 1) * 10; // rows to skip
 
     try {
-        const [companyProfileData] = await db.query('SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?', [companyID]);
-        const [jobpostingsData] = await db.query('SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?', [companyID, rowsToSkip]);
+        const [companyProfileData] = await db.query(
+            'SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
+            [companyID]
+        );
+        const [jobpostingsData] = await db.query(
+            'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
+            [companyID, rowsToSkip]
+        );
         const [countData] = await db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', [companyID]);
 
         if (!companyProfileData.length) {
@@ -138,7 +152,6 @@ const login = async (req) => {
     }
 };
 
-
 //creating company user
 const create = async (req) => {
     const { companyName, password, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
@@ -160,7 +173,6 @@ const create = async (req) => {
         throw error; // Passes error to the central error handler
     }
 };
-
 
 //checking if email is banned from use
 const bannedEmailCheck = async (email) => {
@@ -194,21 +206,21 @@ const companyExist = async (email, userId) => {
 const checkSentPassword = async (password, companyID) => {
     try {
         const [rows] = await db.query('SELECT * FROM companys WHERE id = ?', companyID);
-        
+
         if (rows.length === 0) {
             const error = new Error('Ingen virksomhed fundet');
             error.status = 404;
             throw error;
         }
-        
+
         const isPasswordMatch = bcrypt.compareSync(password, rows[0].password);
-        
+
         if (!isPasswordMatch) {
             const error = new Error('Gamle adgangskode forkert');
             error.status = 409;
             throw error;
         }
-        
+
         return true;
     } catch (error) {
         throw error;
@@ -219,13 +231,13 @@ const checkSentPassword = async (password, companyID) => {
 const allCompanysJobpostings = async (companyID) => {
     try {
         const [result] = await db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', companyID);
-        
+
         if (!result || !result[0]) {
             const error = new Error('Kunne ikke hente virksomheds brugers opslag');
             error.status = 404;
             throw error;
         }
-        
+
         return { jobPostingsCount: result[0].count };
     } catch (error) {
         throw error;
@@ -291,7 +303,7 @@ const updateCompany = async (req, companyID) => {
         valuesForQuery.push(companyID);
 
         const [result] = await db.query(updateQuery, valuesForQuery);
-        
+
         if (result.affectedRows > 0) {
             if (result.changedRows > 0) {
                 return true;
@@ -339,13 +351,13 @@ const updateJobpostes = async (companyID, req) => {
 
     try {
         const [result] = await db.query(updateQuery, valuesForQuery);
-        
+
         if (result.affectedRows === 0) {
             const error = new Error('Kunne ikke opdatere jobopslag for virksomheds bruger');
             error.status = 404;
             throw error;
         }
-        
+
         return true;
     } catch (error) {
         throw error;
@@ -359,13 +371,13 @@ const updatePassword = async (req, userId) => {
 
     try {
         const [result] = await db.query('UPDATE companys SET password = ? WHERE id = ?', [hashPassword, userId]);
-        
+
         if (result.affectedRows === 0) {
             const error = new Error('Kunne ikke opdatere adgangskoden');
             error.status = 404;
             throw error;
         }
-        
+
         return true;
     } catch (error) {
         throw error;
@@ -376,19 +388,18 @@ const updatePassword = async (req, userId) => {
 const deleteCompanyUser = async (companyID) => {
     try {
         const [result] = await db.query('DELETE from companys WHERE id = ?', companyID);
-        
+
         if (result.affectedRows === 0) {
             const error = new Error('Ingen Virksomheds bruger fundet');
             error.status = 404;
             throw error;
         }
-        
+
         return true;
     } catch (error) {
         throw error;
     }
 };
-
 
 module.exports = {
     allCompanys,

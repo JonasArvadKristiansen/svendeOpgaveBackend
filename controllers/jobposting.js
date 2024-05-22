@@ -7,7 +7,7 @@ const allJobpostings = async (req, res) => {
 
         // query to fetch number of rows with data
         const [countResult] = await db.query('SELECT COUNT(*) AS count FROM jobpostings');
-        
+
         // counting number of pages
         const pageCount = Math.ceil(countResult.count / 10);
 
@@ -94,7 +94,6 @@ const filterJobpostings = async (req, res) => {
     }
 };
 
-
 const jobposting = async (req, res) => {
     try {
         const { jobpostingId } = req.query;
@@ -126,7 +125,18 @@ const createJobposting = async (req, companyID) => {
         // Insert jobposting into the database
         await db.query(
             'INSERT INTO jobpostings (title, DESCRIPTION, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [title, DESCRIPTION, deadline, jobtype, companyID, companyData[0].address, companyData[0].city, companyData[0].phonenumber, companyData[0].email, salary]
+            [
+                title,
+                DESCRIPTION,
+                deadline,
+                jobtype,
+                companyID,
+                companyData[0].address,
+                companyData[0].city,
+                companyData[0].phonenumber,
+                companyData[0].email,
+                salary,
+            ]
         );
 
         return true; // Jobposting created successfully
@@ -214,9 +224,9 @@ const updateJobposting = async (req) => {
 const plusCompanyJobpostingCount = async (companyID) => {
     try {
         const [result] = await db.query('UPDATE companys SET jobpostingCount = jobpostingCount + 1 WHERE id = ?', companyID);
-        
+
         if (result.affectedRows > 0) {
-            return true;    
+            return true;
         } else {
             const error = new Error('Kunne ikke opdatere jobopslag tæller for virksomheds bruger');
             error.status = 409;
@@ -227,14 +237,13 @@ const plusCompanyJobpostingCount = async (companyID) => {
     }
 };
 
-
 // for updating a counter in a company user
 const minusCompanyJobpostingCount = async (companyID) => {
     try {
         const [result] = await db.query('UPDATE companys SET jobpostingCount = jobpostingCount - 1 WHERE id = ?', companyID);
-        
+
         if (result.affectedRows > 0) {
-            return true;    
+            return true;
         } else {
             const error = new Error('Kunne ikke opdatere jobopslag tæller for virksomheds bruger');
             error.status = 409;
@@ -249,9 +258,9 @@ const minusCompanyJobpostingCount = async (companyID) => {
 const deleteJobposting = async (jobpostingId) => {
     try {
         const [result] = await db.query('DELETE from jobpostings WHERE id = ?', jobpostingId);
-        
+
         if (result.affectedRows > 0) {
-            return true;    
+            return true;
         } else {
             const error = new Error('Ingen jobopslag fundet');
             error.status = 404;

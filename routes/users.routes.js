@@ -3,9 +3,13 @@ const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
-const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, handler: (req, res) => {
-    res.status(429).json({ message: 'Too many login attempts, please try again later.' });
-} });
+const loginLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    handler: (req, res) => {
+        res.status(429).json({ message: 'Too many login attempts, please try again later.' });
+    },
+});
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
@@ -72,12 +76,10 @@ router.get('/info', async (req, res, next) => {
     try {
         const jwtVerify = await jwt.verifyToken(req);
         await users.getInfo(jwtVerify.userId, res);
-        
     } catch (error) {
         next(error); // this pass error to the central error handler in server.js
     }
 });
-
 
 router.post('/login', loginLimit, async (req, res, next) => {
     try {
@@ -91,12 +93,10 @@ router.post('/login', loginLimit, async (req, res, next) => {
 
         const response = await users.login(req);
         jwt.createJWT(response.user, res);
-
     } catch (error) {
         next(error); // this pass error to the central error handler in server.js
     }
 });
-
 
 router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -131,7 +131,6 @@ router.get('/auth/facebook/callback', passport.authenticate('facebook', { sessio
         next(error); // this pass error to the central error handler in server.js
     }
 });
-
 
 router.post('/create', async (req, res, next) => {
     try {
@@ -193,7 +192,6 @@ router.post('/create', async (req, res, next) => {
 
         // JWT Creation
         jwt.createJWT(result.user, res);
-        
     } catch (error) {
         next(error); // Passes the error to the centralized error handler
     }
@@ -228,7 +226,7 @@ router.put('/update', async (req, res, next) => {
             }
 
             const bannedEmail = await users.bannedEmailCheck(email);
-            
+
             if (bannedEmail) {
                 const error = new Error('Email er ikke tiladt at bruge');
                 error.status = 409;
@@ -237,10 +235,10 @@ router.put('/update', async (req, res, next) => {
         }
 
         await users.update(req, jwtVerify.userId);
-        
+
         return res.status(200).json('Brugeren opdateret');
     } catch (error) {
-        next(error)
+        next(error);
     }
 });
 
@@ -282,10 +280,10 @@ router.put('/password', async (req, res, next) => {
         }
 
         await users.updatePassword(req, jwtVerify.userId);
-        
+
         return res.status(200).json('Brugerens adgangskode opdateret');
     } catch (error) {
-        next(error)
+        next(error);
     }
 });
 
@@ -303,7 +301,7 @@ router.delete('/delete', async (req, res, next) => {
 
         return res.status(200).json('Brugerens profil er slettet');
     } catch (error) {
-        next(error)
+        next(error);
     }
 });
 

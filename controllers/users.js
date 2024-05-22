@@ -5,7 +5,7 @@ const db = require('../utils/DB');
 const getInfo = async (userId, res) => {
     try {
         const [rows] = await db.query('SELECT fullName, email, phonenumber FROM users WHERE id = ?', userId);
-        
+
         if (rows.length > 0) {
             return res.status(200).json(rows);
         } else {
@@ -40,7 +40,7 @@ const login = async (req) => {
         }
 
         const userType = data[0].isAdmin === 1 ? 'Admin' : 'Normal user'; // ternary operator if else
-        return {user: { id: data[0].id, type: userType } };
+        return { user: { id: data[0].id, type: userType } };
     } catch (error) {
         throw error;
     }
@@ -54,12 +54,16 @@ const create = async (req) => {
     const hashPassword = bcrypt.hashSync(password, 10);
 
     try {
-        const [result] = await db.query(
-            'INSERT INTO users (fullName, email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)',
-            [fullName, email, hashPassword, phonenumber, 0]);
+        const [result] = await db.query('INSERT INTO users (fullName, email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)', [
+            fullName,
+            email,
+            hashPassword,
+            phonenumber,
+            0,
+        ]);
 
         let createdUser = { id: result.insertId, type: 'Normal user' };
-        return {user: createdUser };
+        return { user: createdUser };
     } catch (error) {
         throw error;
     }
@@ -93,7 +97,7 @@ const userExist = async (email, userId) => {
     } catch (error) {
         throw error;
     }
-}
+};
 
 // checking if typed oldPassword is right
 const checkSentPassword = async (password, companyID) => {

@@ -64,7 +64,7 @@ router.post('/create', async (req, res, next) => {
 
         await jobpostings.createJobposting(req, jwtVerify.userId);
         await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId);
-            
+
         return res.status(200).json('Jobopslag oprettet');
     } catch (error) {
         next(error);
@@ -98,7 +98,6 @@ router.put('/update', async (req, res, next) => {
         await jobpostings.updateJobposting(req);
 
         return res.status(200).json('Jobopslag opdateret');
-        
     } catch (error) {
         next(error);
     }
@@ -133,6 +132,5 @@ router.delete('/delete', async (req, res, next) => {
         next(error);
     }
 });
-
 
 module.exports = router;

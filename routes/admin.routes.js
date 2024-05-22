@@ -109,5 +109,4 @@ router.delete('/deleteCompany', async (req, res, next) => {
     }
 });
 
-
 module.exports = router;
