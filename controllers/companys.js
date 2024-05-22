@@ -19,7 +19,7 @@ const allCompanys = async (req, res) => {
 
         res.status(200).json({ companys: companysData, pages: pageCount });
     } catch (error) {
-        throw error; // Passes error to the central error handler
+        throw error; // This pass error to the central error handler in server.js
     }
 };
 
@@ -54,15 +54,9 @@ const filterCompanys = async (req, res) => {
         filterQuery += ' LIMIT 10 OFFSET ?';
         const [companysData] = await db.query(filterQuery, [...whereValues, rowsToSkip]);
 
-        if (companysData.affectedRows === 0) {
-            const error = new Error('Kunne ikke opdatere virksomheds bruger');
-            error.status = 404;
-            throw error;
-        }
-
         res.status(200).json({ companys: companysData, pages: pageCount, url: req.originalUrl });
     } catch (error) {
-        throw error; // Passes error to the central error handler
+        throw error; // This pass error to the central error handler in server.js
     }
 };
 
@@ -92,7 +86,7 @@ const profile = async (req, res) => {
 
         res.status(200).json({ companyProfileData, jobpostingsData, pages: pageCount });
     } catch (error) {
-        throw error; // Passes error to the central error handler
+        throw error; // This pass error to the central error handler in server.js
     }
 };
 
@@ -121,7 +115,7 @@ const getCompanyInfo = async (companyID, req, res) => {
 
         return res.status(200).json({ companyProfileData, jobpostingsData, pages: pageCount });
     } catch (error) {
-        throw error; // Passes error to the central error handler
+        throw error; // This pass error to the central error handler in server.js
     }
 };
 
@@ -148,7 +142,7 @@ const login = async (req) => {
         const loginUser = { id: data[0].id, type: 'Company user' };
         return { user: loginUser };
     } catch (error) {
-        throw error; // Passes error to the central error handler
+        throw error; // This pass error to the central error handler in server.js
     }
 };
 
@@ -170,7 +164,7 @@ const create = async (req) => {
         const createdUser = { id: result.insertId, type: 'Company user' };
         return { user: createdUser };
     } catch (error) {
-        throw error; // Passes error to the central error handler
+        throw error; // This pass error to the central error handler in server.js
     }
 };
 
@@ -181,7 +175,7 @@ const bannedEmailCheck = async (email) => {
 
         return data.length > 0;
     } catch (error) {
-        throw error; // Passes error to the central error handler
+        throw error; // This pass error to the central error handler in server.js
     }
 };
 
@@ -198,7 +192,7 @@ const companyExist = async (email, userId) => {
 
         return data.length > 0;
     } catch (error) {
-        throw error; // Passes error to the central error handler
+        throw error; // This pass error to the central error handler in server.js
     }
 };
 
@@ -304,6 +298,7 @@ const updateCompany = async (req, companyID) => {
 
         const [result] = await db.query(updateQuery, valuesForQuery);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows > 0) {
             if (result.changedRows > 0) {
                 return true;
@@ -352,6 +347,7 @@ const updateJobpostes = async (companyID, req) => {
     try {
         const [result] = await db.query(updateQuery, valuesForQuery);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows === 0) {
             const error = new Error('Kunne ikke opdatere jobopslag for virksomheds bruger');
             error.status = 404;
@@ -372,6 +368,7 @@ const updatePassword = async (req, userId) => {
     try {
         const [result] = await db.query('UPDATE companys SET password = ? WHERE id = ?', [hashPassword, userId]);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows === 0) {
             const error = new Error('Kunne ikke opdatere adgangskoden');
             error.status = 404;
@@ -389,6 +386,7 @@ const deleteCompanyUser = async (companyID) => {
     try {
         const [result] = await db.query('DELETE from companys WHERE id = ?', companyID);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows === 0) {
             const error = new Error('Ingen Virksomheds bruger fundet');
             error.status = 404;

@@ -225,6 +225,7 @@ const plusCompanyJobpostingCount = async (companyID) => {
     try {
         const [result] = await db.query('UPDATE companys SET jobpostingCount = jobpostingCount + 1 WHERE id = ?', companyID);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows > 0) {
             return true;
         } else {
@@ -242,6 +243,7 @@ const minusCompanyJobpostingCount = async (companyID) => {
     try {
         const [result] = await db.query('UPDATE companys SET jobpostingCount = jobpostingCount - 1 WHERE id = ?', companyID);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows > 0) {
             return true;
         } else {
@@ -259,6 +261,7 @@ const deleteJobposting = async (jobpostingId) => {
     try {
         const [result] = await db.query('DELETE from jobpostings WHERE id = ?', jobpostingId);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows > 0) {
             return true;
         } else {

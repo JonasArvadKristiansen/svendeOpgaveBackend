@@ -76,13 +76,11 @@ const bannedEmailCheck = async (email) => {
 
         return data.length > 0;
     } catch (error) {
-        const dbError = new Error('Kunne ikke hente ban emails');
-        dbError.status = 500;
-        throw dbError;
+        throw error;
     }
 };
 
-//checking if any user with that email exists
+// checking if any user with that email exists
 const userExist = async (email, userId) => {
     try {
         const [data] = await db.query('SELECT * FROM users WHERE email = ?', email);
@@ -156,6 +154,7 @@ const update = async (req, userId) => {
 
         const [result] = await db.query(updateQuery, valuesForQuery);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows > 0) {
             if (result.changedRows > 0) {
                 return true;
@@ -182,6 +181,7 @@ const updatePassword = async (req, userId) => {
 
         const [result] = await db.query('UPDATE users SET password = ? WHERE id = ?', [hashPassword, userId]);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows > 0) {
             return true; // returns true is password is updated
         } else {
@@ -199,6 +199,7 @@ const deleteUser = async (userId) => {
     try {
         const [result] = await db.query('DELETE from users WHERE id = ?', userId);
 
+        // Check if rows were affected and/or changed
         if (result.affectedRows > 0) {
             return true; // returns true if user is deleted
         } else {
