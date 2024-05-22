@@ -9,12 +9,12 @@ const jobpostings = require('./routes/jobpostings.routes');
 
 app.use(cors()); // allow cross site access
 app.use(helmet()); // enhance security in backend
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use('/api/user', users);
-app.use('/api/admin', admin);
-app.use('/api/company', companys);
-app.use('/api/jobpost', jobpostings);
+app.use(express.json()); // makes incoming fetch json available in req.body
+app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.body.query
+app.use('/api/user', users); // routing endpoints for users
+app.use('/api/admin', admin); // routing endpoints for admin
+app.use('/api/company', companys); // routing endpoints for companys
+app.use('/api/jobpost', jobpostings); // routing endpoints for jobpostings
 
 // Centralized error handling middleware. More readable and maintainable
 app.use((error, req, res, next) => {

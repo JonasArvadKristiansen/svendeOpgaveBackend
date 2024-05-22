@@ -14,7 +14,7 @@ router.get('/all', async (req, res, next) => {
     try {
         await companys.allCompanys(req, res);
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -30,7 +30,7 @@ router.get('/filter', async (req, res, next) => {
 
         await companys.filterCompanys(req, res);
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -44,6 +44,7 @@ router.get('/profile', async (req, res, next) => {
             throw error;
         }
 
+        // verifying token
         await jwt.verifyToken(req);
 
         await companys.profile(req, res);
@@ -54,6 +55,7 @@ router.get('/profile', async (req, res, next) => {
 
 router.get('/info', async (req, res, next) => {
     try {
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Company user') {
@@ -64,7 +66,7 @@ router.get('/info', async (req, res, next) => {
 
         await companys.getCompanyInfo(jwtVerify.userId, req, res);
     } catch (error) {
-        next(error); // Pass the error to the central error handler
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -82,7 +84,7 @@ router.post('/login', loginLimit, async (req, res, next) => {
 
         jwt.createJWT(response.user, res);
     } catch (error) {
-        next(error); // Pass the error to the central error handler
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -171,13 +173,15 @@ router.post('/create', async (req, res, next) => {
         // If creation successful, create JWT token
         jwt.createJWT(resultOfCreateCompany.user, res);
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
 router.put('/update', async (req, res) => {
     try {
         const { companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
+
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Company user') {
@@ -223,13 +227,15 @@ router.put('/update', async (req, res) => {
 
         return res.status(200).json('Virksomheds brugeren er opdateret');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
 router.put('/password', async (req, res, next) => {
     try {
         const { oldPassword, newPassword, repeatNewPassword } = req.body;
+
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Company user') {
@@ -268,12 +274,13 @@ router.put('/password', async (req, res, next) => {
 
         return res.status(200).json('Virksomheds brugers adgangskode opdateret');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
 router.delete('/delete', async (req, res, next) => {
     try {
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Company user') {
@@ -286,7 +293,7 @@ router.delete('/delete', async (req, res, next) => {
 
         return res.status(200).json('Virksomheds bruger profil er slettet');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 

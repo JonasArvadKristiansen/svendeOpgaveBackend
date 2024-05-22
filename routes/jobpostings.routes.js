@@ -6,7 +6,7 @@ router.get('/all', async (req, res, next) => {
     try {
         await jobpostings.allJobpostings(req, res);
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -22,7 +22,7 @@ router.get('/filter', async (req, res, next) => {
 
         await jobpostings.filterJobpostings(req, res);
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -36,11 +36,12 @@ router.get('/info', async (req, res, next) => {
             throw error;
         }
 
+        // verifying token
         await jwt.verifyToken(req);
 
         await jobpostings.jobposting(req, res);
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -54,6 +55,7 @@ router.post('/create', async (req, res, next) => {
             throw error;
         }
 
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Company user') {
@@ -67,7 +69,7 @@ router.post('/create', async (req, res, next) => {
 
         return res.status(200).json('Jobopslag oprettet');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -81,6 +83,7 @@ router.put('/update', async (req, res, next) => {
             throw error;
         }
 
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Company user') {
@@ -99,7 +102,7 @@ router.put('/update', async (req, res, next) => {
 
         return res.status(200).json('Jobopslag opdateret');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -113,6 +116,7 @@ router.delete('/delete', async (req, res, next) => {
             throw error;
         }
 
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Company user') {
@@ -129,7 +133,7 @@ router.delete('/delete', async (req, res, next) => {
             return res.status(200).json('Jobopslag slettet');
         }
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 

@@ -4,6 +4,7 @@ const jwt = require('../utils/jwt');
 
 router.get('/statistikData', async (req, res, next) => {
     try {
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Admin') {
@@ -14,12 +15,13 @@ router.get('/statistikData', async (req, res, next) => {
 
         await admin.allData(req, res);
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
 router.get('/allBannedEmails', async (req, res, next) => {
     try {
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Admin') {
@@ -30,7 +32,7 @@ router.get('/allBannedEmails', async (req, res, next) => {
 
         await admin.getAllBannedEmails(req, res);
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -44,6 +46,7 @@ router.post('/banEmail', async (req, res, next) => {
             throw error;
         }
 
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Admin') {
@@ -57,7 +60,7 @@ router.post('/banEmail', async (req, res, next) => {
 
         return res.status(200).json('Email kan længere bruges på siden og brugerne med denne email er fjernet');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -71,6 +74,7 @@ router.delete('/deleteUser', async (req, res, next) => {
             throw error;
         }
 
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Admin') {
@@ -81,7 +85,7 @@ router.delete('/deleteUser', async (req, res, next) => {
 
         return res.status(200).json('Brugerens profil er slettet');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -95,6 +99,7 @@ router.delete('/deleteCompany', async (req, res, next) => {
             throw error;
         }
 
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Admin') {
@@ -105,7 +110,7 @@ router.delete('/deleteCompany', async (req, res, next) => {
 
         return res.status(200).json('Virksomheds bruger profil er slettet');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 

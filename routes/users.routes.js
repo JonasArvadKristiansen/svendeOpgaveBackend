@@ -74,10 +74,11 @@ passport.use(
 
 router.get('/info', async (req, res, next) => {
     try {
+        //verifying token
         const jwtVerify = await jwt.verifyToken(req);
         await users.getInfo(jwtVerify.userId, res);
     } catch (error) {
-        next(error); // this pass error to the central error handler in server.js
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -94,7 +95,7 @@ router.post('/login', loginLimit, async (req, res, next) => {
         const response = await users.login(req);
         jwt.createJWT(response.user, res);
     } catch (error) {
-        next(error); // this pass error to the central error handler in server.js
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -110,7 +111,7 @@ router.get('/auth/google/callback', passport.authenticate('google', { session: f
         // If authentication succeeds, create JWT
         jwt.createJWT(req.user, res);
     } catch (error) {
-        next(error); // this pass error to the central error handler in server.js
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -128,7 +129,7 @@ router.get('/auth/facebook/callback', passport.authenticate('facebook', { sessio
         // If authentication succeeds, create JWT
         jwt.createJWT(req.user, res);
     } catch (error) {
-        next(error); // this pass error to the central error handler in server.js
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -193,7 +194,7 @@ router.post('/create', async (req, res, next) => {
         // JWT Creation
         jwt.createJWT(result.user, res);
     } catch (error) {
-        next(error); // Passes the error to the centralized error handler
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
@@ -202,6 +203,8 @@ router.post('/sendEmail', async (req, res) => {});
 router.put('/update', async (req, res, next) => {
     try {
         const { fullName, email, phonenumber } = req.body;
+
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Normal user') {
@@ -238,13 +241,15 @@ router.put('/update', async (req, res, next) => {
 
         return res.status(200).json('Brugeren opdateret');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
 router.put('/password', async (req, res, next) => {
     try {
         const { oldPassword, newPassword, repeatNewPassword } = req.body;
+
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Normal user' && jwtVerify.type !== 'Admin') {
@@ -267,7 +272,7 @@ router.put('/password', async (req, res, next) => {
             throw error;
         }
 
-        //RegExp test checks if password contains one upper_case letter
+        // RegExp test checks if password contains one upper_case letter
         const containsUppercase = /[A-Z]/.test(newPassword);
 
         // RegExp test Checks if the password contains at least one number
@@ -283,12 +288,13 @@ router.put('/password', async (req, res, next) => {
 
         return res.status(200).json('Brugerens adgangskode opdateret');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 
 router.delete('/delete', async (req, res, next) => {
     try {
+        // verifying token
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Normal user') {
@@ -301,7 +307,7 @@ router.delete('/delete', async (req, res, next) => {
 
         return res.status(200).json('Brugerens profil er slettet');
     } catch (error) {
-        next(error);
+        next(error); // This pass error to the central error handler in server.js
     }
 });
 

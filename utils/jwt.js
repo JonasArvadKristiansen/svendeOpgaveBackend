@@ -15,7 +15,7 @@ function createJWT(user, res) {
     }
 }
 
-// tjekking if user token is vaild
+// tjekking if token is vaild
 async function verifyToken(req) {
     return new Promise((resolve, reject) => {
         const authHeader = req.headers['authorization'];
