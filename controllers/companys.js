@@ -13,9 +13,10 @@ const allCompanys = async (req, res) => {
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // Query to fetch data for paginated page
-        const [companysData] = await db.query('SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [
-            rowsToSkip,
-        ]);
+        const [companysData] = await db.query(
+            'SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount FROM companys LIMIT 10 OFFSET ?',
+            [rowsToSkip]
+        );
 
         res.status(200).json({ companys: companysData, pages: pageCount });
     } catch (error) {

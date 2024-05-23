@@ -90,19 +90,8 @@ router.post('/login', loginLimit, async (req, res, next) => {
 
 router.post('/create', async (req, res, next) => {
     try {
-        const {
-            companyName,
-            password,
-            repeatPassword,
-            description,
-            address,
-            city,
-            phonenumber,
-            email,
-            numberOfEmployees,
-            cvrNumber,
-            jobtypes,
-        } = req.body;
+        const { companyName, password, repeatPassword, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } =
+            req.body;
 
         // Checking if required fields are provided
         if (
