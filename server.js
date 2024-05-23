@@ -6,6 +6,19 @@ const users = require('./routes/users.routes');
 const admin = require('./routes/admin.routes');
 const companys = require('./routes/companys.routes');
 const jobpostings = require('./routes/jobpostings.routes');
+require('dotenv').config();
+
+// Middleware to check if access_token is present
+app.use((req, res, next) => {
+    const requestSecret = req.headers['access_token'];
+  
+    if (requestSecret !== process.env.ACCESS_TOKEN) {
+        const error = new Error('Access not allowed to this server');
+        error.status = 400;
+        next(error); error;
+    }
+    next();
+});
 
 app.use(cors()); // allow cross site access
 app.use(helmet()); // enhance security in backend
