@@ -20,8 +20,9 @@ app.use((req, res, next) => {
         const error = new Error('Access not allowed to this server');
         error.status = 403;
         next(error);
+    } else {
+        next();
     }
-    next();
 });
 
 app.use('/api/user', users); // routing endpoints for users
