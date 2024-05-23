@@ -13,7 +13,7 @@ const allCompanys = async (req, res) => {
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // Query to fetch data for paginated page
-        const [companysData] = await db.query('SELECT id, companyName, LEFT(companyDescription, 535) AS companyDescription, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [
+        const [companysData] = await db.query('SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [
             rowsToSkip,
         ]);
 
@@ -29,7 +29,7 @@ const filterCompanys = async (req, res) => {
 
     try {
         let counterQuery = 'SELECT COUNT(*) AS count FROM companys';
-        let filterQuery = 'SELECT id, companyName, LEFT(companyDescription, 535) AS companyDescription, jobpostingCount FROM companys';
+        let filterQuery = 'SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount FROM companys';
         const whereConditions = [];
         const whereValues = [];
 
@@ -67,11 +67,11 @@ const profile = async (req, res) => {
 
     try {
         const [companyProfileData] = await db.query(
-            'SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
+            'SELECT companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
             [companyID]
         );
         const [jobpostingsData] = await db.query(
-            'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
+            'SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
             [companyID, rowsToSkip]
         );
         const [pageCountData] = await db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', [companyID]);
@@ -96,11 +96,11 @@ const getCompanyInfo = async (companyID, req, res) => {
 
     try {
         const [companyProfileData] = await db.query(
-            'SELECT companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
+            'SELECT companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
             [companyID]
         );
         const [jobpostingsData] = await db.query(
-            'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
+            'SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
             [companyID, rowsToSkip]
         );
         const [countData] = await db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', [companyID]);
@@ -148,7 +148,7 @@ const login = async (req) => {
 
 //creating company user
 const create = async (req) => {
-    const { companyName, password, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
+    const { companyName, password, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
 
     // Hashing password user typed
     const hashPassword = bcrypt.hashSync(password, 10);
@@ -156,8 +156,8 @@ const create = async (req) => {
     try {
         // Inserting data into the database
         const result = await db.query(
-            'INSERT INTO companys (companyName, password, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes, jobpostingCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [companyName, hashPassword, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes.join(','), 0]
+            'INSERT INTO companys (companyName, password, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes, jobpostingCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [companyName, hashPassword, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes.join(','), 0]
         );
 
         // Returning created user information
@@ -251,9 +251,9 @@ const updateCompany = async (req, companyID) => {
             valuesForQuery.push(req.body.companyName);
         }
 
-        if (req.body.companyDescription !== undefined && req.body.companyDescription !== null) {
-            fieldsForUpdates.push('companyDescription = ?');
-            valuesForQuery.push(req.body.companyDescription);
+        if (req.body.description !== undefined && req.body.description !== null) {
+            fieldsForUpdates.push('description = ?');
+            valuesForQuery.push(req.body.description);
         }
 
         if (req.body.address !== undefined && req.body.address !== null) {

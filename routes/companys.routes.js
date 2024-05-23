@@ -34,7 +34,7 @@ router.get('/filter', async (req, res, next) => {
     }
 });
 
-router.get('/profile', async (req, res, next) => {
+router.get('/info', async (req, res, next) => {
     try {
         const { companyID } = req.query;
 
@@ -53,7 +53,7 @@ router.get('/profile', async (req, res, next) => {
     }
 });
 
-router.get('/info', async (req, res, next) => {
+router.get('/profile', async (req, res, next) => {
     try {
         // verifying token
         const jwtVerify = await jwt.verifyToken(req);
@@ -94,7 +94,7 @@ router.post('/create', async (req, res, next) => {
             companyName,
             password,
             repeatPassword,
-            companyDescription,
+            description,
             address,
             city,
             phonenumber,
@@ -110,7 +110,7 @@ router.post('/create', async (req, res, next) => {
                 companyName &&
                 password &&
                 repeatPassword &&
-                companyDescription &&
+                description &&
                 address &&
                 city &&
                 phonenumber &&
@@ -179,7 +179,7 @@ router.post('/create', async (req, res, next) => {
 
 router.put('/update', async (req, res) => {
     try {
-        const { companyName, companyDescription, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
+        const { companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
 
         // verifying token
         const jwtVerify = await jwt.verifyToken(req);
@@ -190,7 +190,7 @@ router.put('/update', async (req, res) => {
             throw error;
         }
 
-        if (!(companyName || companyDescription || address || city || phonenumber || email || numberOfEmployees || cvrNumber || jobtypes)) {
+        if (!(companyName || description || address || city || phonenumber || email || numberOfEmployees || cvrNumber || jobtypes)) {
             const error = new Error('Mindst et felt skal være udfyldt');
             error.status = 400;
             throw error;

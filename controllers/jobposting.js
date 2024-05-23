@@ -9,11 +9,11 @@ const allJobpostings = async (req, res) => {
         const [countResult] = await db.query('SELECT COUNT(*) AS count FROM jobpostings');
 
         // counting number of pages
-        const pageCount = Math.ceil(countResult.count / 10);
+        const pageCount = Math.ceil(countResult[0].count / 10);
 
         // query to fetch data for paginated page
         const [data] = await db.query(
-            `SELECT title, LEFT(DESCRIPTION, 535) AS DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings 
+            `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.address, companys.companyName FROM jobpostings 
             INNER JOIN companys ON jobpostings.companyID = companys.id LIMIT 10 OFFSET ?`,
             [rowsToSkip]
         );
@@ -64,7 +64,7 @@ const filterJobpostings = async (req, res) => {
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // select query for getting data
-        let filterQuery = `SELECT title, LEFT(DESCRIPTION, 535) AS DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName 
+        let filterQuery = `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.address, companys.companyName 
         FROM jobpostings 
         INNER JOIN companys ON jobpostings.companyID = companys.id`;
 
@@ -99,7 +99,7 @@ const jobposting = async (req, res) => {
         const { jobpostingId } = req.query;
 
         const [data] = await db.query(
-            'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName, LEFT(companys.companyDescription, 535) AS companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
+            'SELECT title, jobpostings.description, deadline, jobtype, jobpostings.address, companys.companyName, LEFT(companys.description, 535) AS companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
             [jobpostingId]
         );
 
@@ -112,7 +112,7 @@ const jobposting = async (req, res) => {
 // for creating a jobpost
 const createJobposting = async (req, companyID) => {
     try {
-        const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
+        const { title, description, deadline, jobtype, salary } = req.body;
 
         // Fetch company details from the database
         const [companyData] = await db.query('SELECT address, city, phonenumber, email FROM companys WHERE id = ?', companyID);
@@ -124,10 +124,10 @@ const createJobposting = async (req, companyID) => {
 
         // Insert jobposting into the database
         await db.query(
-            'INSERT INTO jobpostings (title, DESCRIPTION, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO jobpostings (title, description, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 title,
-                DESCRIPTION,
+                description,
                 deadline,
                 jobtype,
                 companyID,
@@ -148,7 +148,7 @@ const createJobposting = async (req, companyID) => {
 // for updating a jobpost information
 const updateJobposting = async (req) => {
     try {
-        const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
+        const { title, description, deadline, jobtype, salary, jobpostingId } = req.body;
 
         if (!jobpostingId) {
             const error = new Error('Job posting ID is required');
@@ -166,9 +166,9 @@ const updateJobposting = async (req) => {
             valuesForQuery.push(title);
         }
 
-        if (DESCRIPTION !== undefined && DESCRIPTION !== null) {
-            fieldsForUpdates.push('DESCRIPTION = ?');
-            valuesForQuery.push(DESCRIPTION);
+        if (description !== undefined && description !== null) {
+            fieldsForUpdates.push('description = ?');
+            valuesForQuery.push(description);
         }
 
         if (deadline !== undefined && deadline !== null) {

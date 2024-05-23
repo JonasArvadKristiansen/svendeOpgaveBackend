@@ -47,9 +47,9 @@ router.get('/info', async (req, res, next) => {
 
 router.post('/create', async (req, res, next) => {
     try {
-        const { title, DESCRIPTION, deadline, jobtype, salary } = req.body;
+        const { title, description, deadline, jobtype, salary } = req.body;
 
-        if (!(title && DESCRIPTION && deadline && jobtype && salary)) {
+        if (!(title && description && deadline && jobtype && salary)) {
             const error = new Error('Mangler felter udfyldt');
             error.status = 400;
             throw error;
@@ -75,7 +75,7 @@ router.post('/create', async (req, res, next) => {
 
 router.put('/update', async (req, res, next) => {
     try {
-        const { title, DESCRIPTION, deadline, jobtype, salary, jobpostingId } = req.body;
+        const { title, description, deadline, jobtype, salary, jobpostingId } = req.body;
 
         if (!jobpostingId) {
             const error = new Error('Mangler jobpostingId udfyldt');
@@ -92,7 +92,7 @@ router.put('/update', async (req, res, next) => {
             throw error;
         }
 
-        if (!(title || DESCRIPTION || deadline || jobtype || salary)) {
+        if (!(title || description || deadline || jobtype || salary)) {
             const error = new Error('Mindst et felt skal være udfyldt');
             error.status = 400;
             throw error;
