@@ -13,7 +13,7 @@ const allCompanys = async (req, res) => {
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // Query to fetch data for paginated page
-        const [companysData] = await db.query('SELECT id, companyName, companyDescription, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [
+        const [companysData] = await db.query('SELECT id, companyName, LEFT(companyDescription, 535) AS companyDescription, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [
             rowsToSkip,
         ]);
 
@@ -29,7 +29,7 @@ const filterCompanys = async (req, res) => {
 
     try {
         let counterQuery = 'SELECT COUNT(*) AS count FROM companys';
-        let filterQuery = 'SELECT id, companyName, companyDescription, jobpostingCount FROM companys';
+        let filterQuery = 'SELECT id, companyName, LEFT(companyDescription, 535) AS companyDescription, jobpostingCount FROM companys';
         const whereConditions = [];
         const whereValues = [];
 

@@ -13,7 +13,7 @@ const allJobpostings = async (req, res) => {
 
         // query to fetch data for paginated page
         const [data] = await db.query(
-            `SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings 
+            `SELECT title, LEFT(DESCRIPTION, 535) AS DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings 
             INNER JOIN companys ON jobpostings.companyID = companys.id LIMIT 10 OFFSET ?`,
             [rowsToSkip]
         );
@@ -64,7 +64,7 @@ const filterJobpostings = async (req, res) => {
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // select query for getting data
-        let filterQuery = `SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName 
+        let filterQuery = `SELECT title, LEFT(DESCRIPTION, 535) AS DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName 
         FROM jobpostings 
         INNER JOIN companys ON jobpostings.companyID = companys.id`;
 
@@ -99,7 +99,7 @@ const jobposting = async (req, res) => {
         const { jobpostingId } = req.query;
 
         const [data] = await db.query(
-            'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName, companys.companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
+            'SELECT title, DESCRIPTION, deadline, jobtype, jobpostings.address, companys.companyName, LEFT(companys.companyDescription, 535) AS companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
             [jobpostingId]
         );
 

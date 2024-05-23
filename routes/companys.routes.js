@@ -6,7 +6,7 @@ const loginLimit = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     handler: (req, res) => {
-        res.status(429).json({ message: 'Too many login attempts, please try again later.' });
+        res.status(429).json({ message: 'For mange login forsøg, Prøv igen senere.' });
     },
 });
 
@@ -59,7 +59,7 @@ router.get('/info', async (req, res, next) => {
         const jwtVerify = await jwt.verifyToken(req);
 
         if (jwtVerify.type !== 'Company user') {
-            const error = new Error('Ikke tilladt, kun virksomheds brugere kan se profil her');
+            const error = new Error('Ikke tilladt, kun virksomheds brugere kan se deres profil her');
             error.status = 401;
             throw error;
         }
