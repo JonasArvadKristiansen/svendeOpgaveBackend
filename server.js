@@ -14,8 +14,8 @@ app.use((req, res, next) => {
   
     if (requestSecret !== process.env.ACCESS_TOKEN) {
         const error = new Error('Access not allowed to this server');
-        error.status = 400;
-        next(error); error;
+        error.status = 403;
+        next(error);
     }
     next();
 });
