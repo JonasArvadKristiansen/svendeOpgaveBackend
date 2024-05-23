@@ -9,9 +9,13 @@ const jobpostings = require('./routes/jobpostings.routes');
 require('dotenv').config();
 
 // Middleware to check if access_token is present
+app.use(cors()); // allow cross site access
+app.use(helmet()); // enhance security in backend
+app.use(express.json()); // makes incoming fetch json available in req.body
+app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.body.query
+
 app.use((req, res, next) => {
-    const requestSecret = req.headers['access_token'];
-  
+    const requestSecret = req.headers['access-token'];
     if (requestSecret !== process.env.ACCESS_TOKEN) {
         const error = new Error('Access not allowed to this server');
         error.status = 403;
@@ -20,10 +24,6 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(cors()); // allow cross site access
-app.use(helmet()); // enhance security in backend
-app.use(express.json()); // makes incoming fetch json available in req.body
-app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.body.query
 app.use('/api/user', users); // routing endpoints for users
 app.use('/api/admin', admin); // routing endpoints for admin
 app.use('/api/company', companys); // routing endpoints for companys
