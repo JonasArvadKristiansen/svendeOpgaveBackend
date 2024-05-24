@@ -1,37 +1,41 @@
 const jsonwebtoken = require('jsonwebtoken');
 require('dotenv').config();
 
-// creating token for a user
-function createJWT(user, res) {
+// Creating token for a user and setting it in a cookie
+async function createJWT(user, res) {
     try {
         // Signing JWT
-        const accessToken = jsonwebtoken.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '1h' });
+        const accessToken = jsonwebtoken.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '2h' });
 
-        // Return the token in json format
-        return res.status(200).json({ token: accessToken });
+        // Set token in a cookie
+        res.cookie('jwt', accessToken, { httpOnly: true, secure: true });
+
+        return true;
     } catch (error) {
-        console.error('Error creating token:', error);
-        return res.status(500).json({ message: 'Token kunne ikke laves' });
+        throw error;
     }
 }
 
-// tjekking if token is vaild
+// Checking if token is valid by retrieving it from the cookie
 async function verifyToken(req) {
     return new Promise((resolve, reject) => {
-        const authHeader = req.headers['authorization'];
-        if (authHeader) {
-            const token = authHeader.split(' ')[1];
+        const token = req.cookies.jwt; // Retrieve token from cookie
+
+        if (token) {
             jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (error, decodedToken) => {
                 if (error) {
-                    const error = new Error('Fejl i at godkende token eller token ikke gyldig længere');
-                    error.status = 498;
-                    reject(error);
+                    // token verification error
+                    const customError = new Error('Error verifying token or token is no longer valid');
+                    customError.status = 498;
+                    reject(customError);
                 } else {
+                    // Resolve with decoded token
                     resolve({ userId: decodedToken.user.id, type: decodedToken.user.type });
                 }
             });
         } else {
-            const error = new Error('ingen token sent');
+            // No token found in the cookie
+            const error = new Error('No token sent');
             error.status = 498;
             reject(error);
         }

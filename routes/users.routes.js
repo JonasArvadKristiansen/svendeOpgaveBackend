@@ -93,7 +93,9 @@ router.post('/login', loginLimit, async (req, res, next) => {
         }
 
         const response = await users.login(req);
-        jwt.createJWT(response.user, res);
+        await jwt.createJWT(response.user, res);
+
+        return res.status(200).json({ message: 'Token lavet og sat i cookies' });
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
@@ -101,7 +103,7 @@ router.post('/login', loginLimit, async (req, res, next) => {
 
 router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/auth/google/callback', passport.authenticate('google', { session: false }), function (req, res, next) {
+router.get('/auth/google/callback', loginLimit, passport.authenticate('google', { session: false }), function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for google failed');
@@ -119,7 +121,7 @@ router.get('/auth/google/callback', passport.authenticate('google', { session: f
 router.get('/auth/facebook', loginLimit, passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
 
 //Endpoint gets called here after users login to facebook
-router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), function (req, res, next) {
+router.get('/auth/facebook/callback', loginLimit, passport.authenticate('facebook', { session: false }), async function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for facebook failed');
@@ -127,7 +129,10 @@ router.get('/auth/facebook/callback', passport.authenticate('facebook', { sessio
             throw error;
         }
         // If authentication succeeds, create JWT
-        jwt.createJWT(req.user, res);
+        await jwt.createJWT(req.user, res);
+        
+        return res.redirect(301, 'https://jonasarvad.com/');
+
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
@@ -192,7 +197,9 @@ router.post('/create', async (req, res, next) => {
         const result = await users.create(req);
 
         // JWT Creation
-        jwt.createJWT(result.user, res);
+        await jwt.createJWT(result.user, res);
+
+        return res.status(200).json({ message: 'Token lavet og sat i cookies' });
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }

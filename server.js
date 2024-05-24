@@ -9,6 +9,13 @@ const jobpostings = require('./routes/jobpostings.routes');
 require('dotenv').config();
 
 app.use((req, res, next) => {
+    if (
+        req.path === '/api/user/auth/facebook' ||
+        req.path === '/api/user/auth/facebook/callback' ||
+        req.path === '/api/user/auth/google' ||
+        req.path === '/api/user/auth/google/callback'
+    ) return next();
+
     const requestSecret = req.headers['access-token'];
     if (requestSecret !== process.env.ACCESS_TOKEN) {
         const error = new Error('Access not allowed to this server');

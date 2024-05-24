@@ -82,7 +82,9 @@ router.post('/login', loginLimit, async (req, res, next) => {
 
         const response = await companys.login(req);
 
-        jwt.createJWT(response.user, res);
+        await jwt.createJWT(response.user);
+
+        return res.status(200).json({ message: 'Token lavet og sat i cookies' });
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
