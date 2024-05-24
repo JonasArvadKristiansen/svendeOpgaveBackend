@@ -103,7 +103,7 @@ router.post('/login', loginLimit, async (req, res, next) => {
 
 router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/auth/google/callback', loginLimit, passport.authenticate('google', { session: false }), function (req, res, next) {
+router.get('/auth/google/callback', loginLimit, passport.authenticate('google', { session: false }), async function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for google failed');
@@ -111,7 +111,9 @@ router.get('/auth/google/callback', loginLimit, passport.authenticate('google', 
             throw error;
         }
         // If authentication succeeds, create JWT
-        jwt.createJWT(req.user, res);
+        await jwt.createJWT(response.user, res);
+
+        return res.redirect(301, 'https://jonasarvad.com/');
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }

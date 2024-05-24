@@ -8,7 +8,13 @@ async function createJWT(user, res) {
         const accessToken = jsonwebtoken.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '2h' });
 
         // Set token in a cookie
-        res.cookie('jwt', accessToken, { httpOnly: true, secure: true });
+        res.cookie('Authorization', accessToken, { 
+            httpOnly: false, // Not setting httpOnly
+            secure: true,    // Require HTTPS connection
+            sameSite: true, // Allow cross-site requests
+            domain: 'jonasarvad.com' // Restrict cookie to this domain
+        });
+        
 
         return true;
     } catch (error) {
@@ -19,7 +25,7 @@ async function createJWT(user, res) {
 // Checking if token is valid by retrieving it from the cookie
 async function verifyToken(req) {
     return new Promise((resolve, reject) => {
-        const token = req.cookies.jwt; // Retrieve token from cookie
+        const token = req.cookies.Authorization; // Retrieve the token from cookie
 
         if (token) {
             jsonwebtoken.verify(token, process.env.TOKEN_SECRET, (error, decodedToken) => {
