@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser')
 const users = require('./routes/users.routes');
 const admin = require('./routes/admin.routes');
 const companys = require('./routes/companys.routes');
@@ -27,6 +28,7 @@ app.use((req, res, next) => {
 });
 
 // Middleware to check if access_token is present
+app.use(cookieParser())
 app.use(cors()); // allow cross site access
 app.use(helmet()); // enhance security in backend
 app.use(express.json()); // makes incoming fetch json available in req.body

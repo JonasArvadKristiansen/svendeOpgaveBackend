@@ -82,7 +82,7 @@ router.post('/login', loginLimit, async (req, res, next) => {
 
         const response = await companys.login(req);
 
-        await jwt.createJWT(response.user);
+        await jwt.createJWT(response.user, res);
 
         return res.status(200).json({ message: 'Token lavet og sat i cookies' });
     } catch (error) {
