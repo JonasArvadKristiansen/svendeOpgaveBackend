@@ -3,12 +3,23 @@ const app = express();
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser')
+const jwtFile = require('./utils/jwt')
 const users = require('./routes/users.routes');
 const admin = require('./routes/admin.routes');
 const companys = require('./routes/companys.routes');
 const jobpostings = require('./routes/jobpostings.routes');
 require('dotenv').config();
 
+app.use(cookieParser())
+app.use(cors({
+    origin: 'http://localhost:5173', // Allow requests from this specific origin
+    credentials: true // Allow credentials (cookies, authorization headers, etc.)
+}));
+app.use(helmet()); // enhance security in backend
+app.use(express.json()); // makes incoming fetch json available in req.body
+app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.body.query
+
+// Middleware to check if access_token is present
 app.use((req, res, next) => {
     if (
         req.path === '/api/user/auth/facebook' ||
@@ -16,9 +27,8 @@ app.use((req, res, next) => {
         req.path === '/api/user/auth/google' ||
         req.path === '/api/user/auth/google/callback'
     ) return next();
-
     const requestSecret = req.headers['access-token'];
-    if (requestSecret !== process.env.ACCESS_TOKEN) {
+    if (requestSecret !== process.env.ACCESSTOKEN) {
         const error = new Error('Access not allowed to this server');
         error.status = 403;
         next(error);
@@ -27,12 +37,6 @@ app.use((req, res, next) => {
     }
 });
 
-// Middleware to check if access_token is present
-app.use(cookieParser())
-app.use(cors()); // allow cross site access
-app.use(helmet()); // enhance security in backend
-app.use(express.json()); // makes incoming fetch json available in req.body
-app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.body.query
 app.use('/api/user', users); // routing endpoints for users
 app.use('/api/admin', admin); // routing endpoints for admin
 app.use('/api/company', companys); // routing endpoints for companys
