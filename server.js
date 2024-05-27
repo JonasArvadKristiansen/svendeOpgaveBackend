@@ -20,11 +20,11 @@ app.use(helmet()); // enhance security in backend
 app.use(express.json()); // makes incoming fetch json available in req.body
 app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.query
 
-// Middleware to check if access-token is present
+// Middleware to check if accesstoken is present
 app.use((req, res, next) => {
     if (req.path === '/api/user/auth/facebook' || req.path === '/api/user/auth/facebook/callback' || req.path === '/api/user/auth/google' || req.path === '/api/user/auth/google/callback')
         return next();
-    const requestSecret = req.headers['access-token'];
+    const requestSecret = req.headers['accesstoken'];
     if (requestSecret !== process.env.ACCESS_TOKEN) {
         const error = new Error('Access not allowed to this server');
         error.status = 403;
