@@ -5,7 +5,13 @@ const upload = require('multer')();
 const nodemailer = require('nodemailer');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
-const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, handler: (req, res) => {res.status(429).json({ message: 'For mange login forsøg, Prøv igen senere.' }); } });
+const loginLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    handler: (req, res) => {
+        res.status(429).json({ message: 'For mange login forsøg, Prøv igen senere.' });
+    },
+});
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
@@ -16,8 +22,8 @@ const mailtrapTP = nodemailer.createTransport({
     port: process.env.MAILTRAP_PORT,
     auth: {
         user: process.env.MAILTRAP_USER,
-        pass: process.env.MAILTRAP_PASS
-    }
+        pass: process.env.MAILTRAP_PASS,
+    },
 });
 
 // Middleware for initialisere Passport
@@ -119,9 +125,8 @@ router.get('/auth/facebook/callback', loginLimit, passport.authenticate('faceboo
         }
         // If authentication succeeds, create JWT
         await jwt.createJWT(req.user, res);
-        
-        return res.redirect(301, 'https://jonasarvad.com/');
 
+        return res.redirect(301, 'https://jonasarvad.com/');
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
@@ -217,7 +222,7 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
     try {
         const { receiver, title, text } = req.body;
         const files = req.files;
-        
+
         if (!receiver && !title && !text && !files && files.length === 0) {
             const error = new Error('Mangler felter udfyldt');
             error.status = 400;
@@ -225,12 +230,12 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
         }
 
         const jwtVerify = await jwt.verifyToken(req);
-        const getUserEmail = await users.getEmail(jwtVerify.userId)
+        const getUserEmail = await users.getEmail(jwtVerify.userId);
 
         // Process files in memory using multer
-        const attachments = files.map(file => ({
+        const attachments = files.map((file) => ({
             filename: file.originalname,
-            content: file.buffer
+            content: file.buffer,
         }));
 
         // setting email fields
@@ -239,7 +244,7 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
             to: receiver,
             subject: title,
             text: text,
-            attachments: attachments
+            attachments: attachments,
         };
 
         // Sending emails using npm nodemailer

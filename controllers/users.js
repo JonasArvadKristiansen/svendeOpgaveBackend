@@ -71,13 +71,7 @@ const create = async (req) => {
     const hashPassword = bcrypt.hashSync(password, 10);
 
     try {
-        const [result] = await db.query('INSERT INTO users (fullName, email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)', [
-            fullName,
-            email,
-            hashPassword,
-            phonenumber,
-            0,
-        ]);
+        const [result] = await db.query('INSERT INTO users (fullName, email, password, phonenumber, isAdmin) VALUES (?, ?, ?, ?, ?)', [fullName, email, hashPassword, phonenumber, 0]);
 
         let createdUser = { id: result.insertId, type: 'Normal user' };
         return { user: createdUser };

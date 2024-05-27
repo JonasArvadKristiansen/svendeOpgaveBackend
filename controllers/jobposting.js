@@ -123,21 +123,18 @@ const createJobposting = async (req, companyID) => {
         }
 
         // Insert jobposting into the database
-        await db.query(
-            'INSERT INTO jobpostings (title, description, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [
-                title,
-                description,
-                deadline,
-                jobtype,
-                companyID,
-                companyData[0].address,
-                companyData[0].city,
-                companyData[0].phonenumber,
-                companyData[0].email,
-                salary,
-            ]
-        );
+        await db.query('INSERT INTO jobpostings (title, description, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+            title,
+            description,
+            deadline,
+            jobtype,
+            companyID,
+            companyData[0].address,
+            companyData[0].city,
+            companyData[0].phonenumber,
+            companyData[0].email,
+            salary,
+        ]);
 
         return true; // Jobposting created successfully
     } catch (error) {

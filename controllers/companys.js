@@ -13,10 +13,7 @@ const allCompanys = async (req, res) => {
         const pageCount = Math.ceil(countResult[0].count / 10);
 
         // Query to fetch data for paginated page
-        const [companysData] = await db.query(
-            'SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount FROM companys LIMIT 10 OFFSET ?',
-            [rowsToSkip]
-        );
+        const [companysData] = await db.query('SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount FROM companys LIMIT 10 OFFSET ?', [rowsToSkip]);
 
         res.status(200).json({ companys: companysData, pages: pageCount });
     } catch (error) {
@@ -67,10 +64,9 @@ const profile = async (req, res) => {
     const { companyID } = req.query;
 
     try {
-        const [companyProfileData] = await db.query(
-            'SELECT companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
-            [companyID]
-        );
+        const [companyProfileData] = await db.query('SELECT companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?', [
+            companyID,
+        ]);
         const [jobpostingsData] = await db.query(
             'SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
             [companyID, rowsToSkip]
@@ -96,10 +92,9 @@ const getCompanyInfo = async (companyID, req, res) => {
     const rowsToSkip = (currentPageNumber - 1) * 10; // rows to skip
 
     try {
-        const [companyProfileData] = await db.query(
-            'SELECT companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?',
-            [companyID]
-        );
+        const [companyProfileData] = await db.query('SELECT companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?', [
+            companyID,
+        ]);
         const [jobpostingsData] = await db.query(
             'SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
             [companyID, rowsToSkip]

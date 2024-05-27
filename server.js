@@ -2,30 +2,28 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const helmet = require('helmet');
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
 const users = require('./routes/users.routes');
 const admin = require('./routes/admin.routes');
 const companys = require('./routes/companys.routes');
 const jobpostings = require('./routes/jobpostings.routes');
 require('dotenv').config();
 
-app.use(cookieParser())
-app.use(cors({
-    origin: 'http://localhost:5173', // Allow requests from this specific origin
-    credentials: true // Allow credentials (cookies, authorization headers, etc.)
-}));
+app.use(cookieParser());
+app.use(
+    cors({
+        origin: 'http://localhost:5173', // Allow requests from this specific origin
+        credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+    })
+);
 app.use(helmet()); // enhance security in backend
 app.use(express.json()); // makes incoming fetch json available in req.body
 app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.query
 
-// Middleware to check if access_token is present
+// Middleware to check if access-token is present
 app.use((req, res, next) => {
-    if (
-        req.path === '/api/user/auth/facebook' ||
-        req.path === '/api/user/auth/facebook/callback' ||
-        req.path === '/api/user/auth/google' ||
-        req.path === '/api/user/auth/google/callback'
-    ) return next();
+    if (req.path === '/api/user/auth/facebook' || req.path === '/api/user/auth/facebook/callback' || req.path === '/api/user/auth/google' || req.path === '/api/user/auth/google/callback')
+        return next();
     const requestSecret = req.headers['access-token'];
     if (requestSecret !== process.env.ACCESS_TOKEN) {
         const error = new Error('Access not allowed to this server');
