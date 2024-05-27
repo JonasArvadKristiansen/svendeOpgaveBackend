@@ -3,7 +3,9 @@ const app = express();
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser')
-const jwtFile = require('./utils/jwt')
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 const users = require('./routes/users.routes');
 const admin = require('./routes/admin.routes');
 const companys = require('./routes/companys.routes');
@@ -17,7 +19,8 @@ app.use(cors({
 }));
 app.use(helmet()); // enhance security in backend
 app.use(express.json()); // makes incoming fetch json available in req.body
-app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.body.query
+app.use(express.urlencoded({ extended: true })); // makes URL-encoded data available in req.query
+app.use(upload.any());
 
 // Middleware to check if access_token is present
 app.use((req, res, next) => {

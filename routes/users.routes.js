@@ -3,13 +3,10 @@ const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
-const loginLimit = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5,
-    handler: (req, res) => {
-        res.status(429).json({ message: 'For mange login forsøg, Prøv igen senere.' });
-    },
-});
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, handler: (req, res) => {res.status(429).json({ message: 'For mange login forsøg, Prøv igen senere.' }); } });
+const mailgun = require('mailgun-js');
+const mailsender = mailgun({ apiKey: process.env.MAILGUN_API_KEY, domain: process.env.DOMAIN });
+console.log(mailsender);
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
@@ -82,25 +79,6 @@ router.get('/info', async (req, res, next) => {
     }
 });
 
-router.post('/login', loginLimit, async (req, res, next) => {
-    try {
-        const { email, password } = req.body;
-
-        if (!(email && password)) {
-            const error = new Error('Mangler felter udfyldt');
-            error.status = 400;
-            throw error;
-        }
-
-        const response = await users.login(req);
-        await jwt.createJWT(response.user, res);
-
-        return res.status(200).json({ message: 'Token lavet og sat i cookies' });
-    } catch (error) {
-        next(error); // This pass error to the central error handler in server.js
-    }
-});
-
 router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/auth/google/callback', loginLimit, passport.authenticate('google', { session: false }), async function (req, res, next) {
@@ -135,6 +113,25 @@ router.get('/auth/facebook/callback', loginLimit, passport.authenticate('faceboo
         
         return res.redirect(301, 'https://jonasarvad.com/');
 
+    } catch (error) {
+        next(error); // This pass error to the central error handler in server.js
+    }
+});
+
+router.post('/login', loginLimit, async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!(email && password)) {
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
+        }
+
+        const response = await users.login(req);
+        await jwt.createJWT(response.user, res);
+
+        return res.status(200).json({ message: 'Token lavet og sat i cookies' });
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
@@ -207,7 +204,38 @@ router.post('/create', async (req, res, next) => {
     }
 });
 
-router.post('/sendEmail', async (req, res) => {});
+router.post('/sendEmail', async (req, res) => {
+    const { sender, receiver, title, text } = req.body;
+    const files = req.files;
+
+    if (!sender || !receiver || !title || !text || !files || files.length === 0) {
+        return res.status(400).send('Missing required fields');
+    }
+
+    // Process files in memory
+    const attachments = files.map(file => ({
+        filename: file.originalname,
+        data: file.buffer
+    }));
+
+    // Prepare the data for Mailgun
+    const data = {
+    from: sender,
+    to: receiver,
+    subject: title,
+    text: text,
+    attachment: attachments
+    };
+
+    // Send email using Mailgun
+    mailsender.messages().send(data, (error, body) => {
+    if (error) {
+        console.error('Error:', error);
+        return res.status(500).send('Failed to send email');
+    }
+        res.send('Email sent successfully');
+    });
+});
 
 router.put('/update', async (req, res, next) => {
     try {
