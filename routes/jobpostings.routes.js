@@ -12,12 +12,10 @@ router.get('/all', async (req, res, next) => {
 
 router.get('/filter', async (req, res, next) => {
     try {
-        const { deadline, minSalary, jobtype, search } = req.query;
+        const { deadline, minSalary, jobtype, search, newestJobpost } = req.query;
 
-        if (!(deadline || minSalary || jobtype || search)) {
-            const error = new Error('Mindst et filter skal være udfyldt');
-            error.status = 400;
-            throw error;
+        if (!(deadline || minSalary || jobtype || search || newestJobpost)) {
+            await jobpostings.allJobpostings(req, res);
         }
 
         await jobpostings.filterJobpostings(req, res);

@@ -75,10 +75,10 @@ const filterJobpostings = async (req, res) => {
 
         // adding order by clause based on newestJobpost
         if (req.query.newestJobpost) {
-            if (req.query.newestJobpost === 'new') {
-                filterQuery += ' ORDER BY deadline DESC';
-            } else if (req.query.newestJobpost === 'old') {
-                filterQuery += ' ORDER BY deadline ASC';
+            if (req.query.newestJobpost.toLowerCase() === 'new') {
+                filterQuery += ' ORDER BY jobpostings.id DESC';
+            } else if (req.query.newestJobpost.toLowerCase() === 'old') {
+                filterQuery += ' ORDER BY jobpostings.id ASC';
             }
         }
 
@@ -99,7 +99,7 @@ const jobposting = async (req, res) => {
         const { jobpostingId } = req.query;
 
         const [data] = await db.query(
-            'SELECT *, companys.companyName, LEFT(companys.description, 535) AS companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
+            'SELECT *, companys.email companys.companyName, LEFT(companys.description, 535) AS companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
             [jobpostingId]
         );
 

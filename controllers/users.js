@@ -1,7 +1,24 @@
 const bcrypt = require('bcrypt');
 const db = require('../utils/DB');
 
-// for login a user
+// for getting a users info email
+const getEmail = async (userId, res) => {
+    try {
+        const [rows] = await db.query('SELECT email FROM users WHERE id = ?', userId);
+
+        if (rows.length > 0) {
+            return rows[0];
+        } else {
+            const error = new Error('Ingen bruger fundet');
+            error.status = 404;
+            throw error;
+        }
+    } catch (error) {
+        throw error;
+    }
+};
+
+// for getting a users info
 const getInfo = async (userId, res) => {
     try {
         const [rows] = await db.query('SELECT fullName, email, phonenumber FROM users WHERE id = ?', userId);
@@ -213,6 +230,7 @@ const deleteUser = async (userId) => {
 };
 
 module.exports = {
+    getEmail,
     getInfo,
     login,
     create,

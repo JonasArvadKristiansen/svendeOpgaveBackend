@@ -1,15 +1,24 @@
 const router = require('express').Router();
 const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
+const upload = require('multer')();
+const nodemailer = require('nodemailer');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
 const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, handler: (req, res) => {res.status(429).json({ message: 'For mange login forsøg, Prøv igen senere.' }); } });
-const mailgun = require('mailgun-js');
-const mailsender = mailgun({ apiKey: process.env.MAILGUN_API_KEY, domain: process.env.DOMAIN });
-console.log(mailsender);
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
+
+// this is the config for mailtrap.io
+const mailtrapTP = nodemailer.createTransport({
+    host: process.env.MAILTRAP_HOST,
+    port: process.env.MAILTRAP_PORT,
+    auth: {
+        user: process.env.MAILTRAP_USER,
+        pass: process.env.MAILTRAP_PASS
+    }
+});
 
 // Middleware for initialisere Passport
 router.use(passport.initialize());
@@ -204,37 +213,46 @@ router.post('/create', async (req, res, next) => {
     }
 });
 
-router.post('/sendEmail', async (req, res) => {
-    const { sender, receiver, title, text } = req.body;
-    const files = req.files;
+router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
+    try {
+        const { receiver, title, text } = req.body;
+        const files = req.files;
+        
+        if (!receiver && !title && !text && !files && files.length === 0) {
+            const error = new Error('Mangler felter udfyldt');
+            error.status = 400;
+            throw error;
+        }
 
-    if (!sender || !receiver || !title || !text || !files || files.length === 0) {
-        return res.status(400).send('Missing required fields');
+        const jwtVerify = await jwt.verifyToken(req);
+        const getUserEmail = await users.getEmail(jwtVerify.userId)
+
+        // Process files in memory using multer
+        const attachments = files.map(file => ({
+            filename: file.originalname,
+            content: file.buffer
+        }));
+
+        // setting email fields
+        const mailFields = {
+            from: getUserEmail.email,
+            to: receiver,
+            subject: title,
+            text: text,
+            attachments: attachments
+        };
+
+        // Sending emails using npm nodemailer
+        mailtrapTP.sendMail(mailFields, (error, info) => {
+            if (error) {
+                console.error('Error:', error);
+                return res.status(500).send('Failed to send email');
+            }
+            res.send('Email sent successfully');
+        });
+    } catch (error) {
+        next(error); // This pass error to the central error handler in server.js
     }
-
-    // Process files in memory
-    const attachments = files.map(file => ({
-        filename: file.originalname,
-        data: file.buffer
-    }));
-
-    // Prepare the data for Mailgun
-    const data = {
-    from: sender,
-    to: receiver,
-    subject: title,
-    text: text,
-    attachment: attachments
-    };
-
-    // Send email using Mailgun
-    mailsender.messages().send(data, (error, body) => {
-    if (error) {
-        console.error('Error:', error);
-        return res.status(500).send('Failed to send email');
-    }
-        res.send('Email sent successfully');
-    });
 });
 
 router.put('/update', async (req, res, next) => {

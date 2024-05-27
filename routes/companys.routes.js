@@ -23,9 +23,7 @@ router.get('/filter', async (req, res, next) => {
         const { jobtype, search } = req.query;
 
         if (!(jobtype || search)) {
-            const error = new Error('Mindst et filter skal være udfyldt');
-            error.status = 400;
-            throw error;
+            await companys.allCompanys(req, res);
         }
 
         await companys.filterCompanys(req, res);
