@@ -145,7 +145,9 @@ router.post('/create', async (req, res, next) => {
         const resultOfCreateCompany = await companys.create(req, res);
 
         // If creation successful, create JWT token
-        jwt.createJWT(resultOfCreateCompany.user, res);
+        await jwt.createJWT(resultOfCreateCompany.user, res);
+
+        return res.status(200).json({ message: 'Token lavet og sat i cookies' });
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
