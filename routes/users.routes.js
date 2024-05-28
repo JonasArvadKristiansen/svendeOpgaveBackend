@@ -34,7 +34,7 @@ passport.use(
         {
             clientID: `${process.env.FACEBOOK_clientID}`, // key from facebook developer
             clientSecret: `${process.env.FACEBOOK_clientSecret}`, // key from facebook developer
-            callbackURL: 'http://localhost:3000/user/auth/facebook/callback', //part of offical documentation to call it this
+            callbackURL: 'https://jonasarvad.com/api/user/auth/facebook/callback', //part of offical documentation to call it this
             profileFields: ['displayName', 'email'], //values collected from facebook profile after success login
             enableProof: true, //sha256 hash of your accesstoken, using clientSecret for protection against outside attacks
         },
@@ -49,7 +49,7 @@ passport.use(
             const tokenPayload = {
                 fullName: profile.displayName,
                 email: profile.emails[0].value,
-                type: 'Facebook user',
+                type: 'Social media user',
             };
 
             //saves by default tokenPayload in req.user
@@ -63,7 +63,7 @@ passport.use(
         {
             clientID: `${process.env.GOOGLE_clientID}`,
             clientSecret: `${process.env.GOOGLE_clientSecret}`,
-            callbackURL: 'http://localhost:3000/user/auth/google/callback',
+            callbackURL: 'https://jonasarvad.com/api/user/auth/google/callback',
         },
         function (accessToken, refreshToken, profile, callback) {
             if (!profile || !profile.emails || profile.emails.length === 0) {
@@ -75,7 +75,7 @@ passport.use(
             const tokenPayload = {
                 fullName: profile.displayName,
                 email: profile.emails[0].value,
-                type: 'Google user',
+                type: 'Social media user',
             };
 
             //saves by default tokenPayload in req.user
@@ -220,6 +220,7 @@ router.post('/create', async (req, res, next) => {
 
 router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
     try {
+        let userEmail;
         const { receiver, title, text } = req.body;
         const files = req.files;
 
@@ -230,7 +231,12 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
         }
 
         const jwtVerify = await jwt.verifyToken(req);
-        const getUserEmail = await users.getEmail(jwtVerify.userId);
+        if(jwtVerify.type == "Social media user") {
+            userEmail = jwtVerify.email    
+        } else {
+            const getUserEmail = await users.getEmail(jwtVerify.userId);
+            userEmail = getUserEmail.email
+        }
 
         // Process files in memory using multer
         const attachments = files.map((file) => ({
@@ -240,7 +246,7 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
 
         // setting email fields
         const mailFields = {
-            from: getUserEmail.email,
+            from: userEmail,
             to: receiver,
             subject: title,
             text: text,
@@ -250,10 +256,11 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
         // Sending emails using npm nodemailer
         mailtrapTP.sendMail(mailFields, (error, info) => {
             if (error) {
-                console.error('Error:', error);
-                return res.status(500).send('Failed to send email');
+                const error = new Error('Failed to send email');
+                error.status = 400;
+                throw error;
             }
-            res.send('Email sent successfully');
+            res.json(200).json('Email sent successfully');
         });
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
