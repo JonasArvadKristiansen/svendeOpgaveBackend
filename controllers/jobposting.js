@@ -18,7 +18,7 @@ const allJobpostings = async (req, res) => {
             [rowsToSkip]
         );
 
-        res.status(200).json({ jobpostings: data, pages: pageCount });
+        return res.status(200).json({ jobpostings: data, pages: pageCount });
     } catch (error) {
         throw error;
     }
@@ -35,9 +35,9 @@ const filterJobpostings = async (req, res) => {
         let whereValues = [];
 
         // if conditions checking if some or all query parameters are present
-        if (req.query.deadline) {
-            whereConditions.push('deadline = ?');
-            whereValues.push(req.query.deadline);
+        if (req.query.deadlineFirst && req.query.deadlineLast) {
+            whereConditions.push('deadline BETWEEN ? AND ?');
+            whereValues.push(req.query.deadlineFirst, req.query.deadlineLast);
         }
         if (req.query.minSalary) {
             whereConditions.push('salary >= ?');
@@ -88,7 +88,7 @@ const filterJobpostings = async (req, res) => {
         // query to fetch data for paginated page and ... spread operator is used to copy one a array to a new one
         const [data] = await db.query(filterQuery, [...whereValues, rowsToSkip]);
 
-        res.status(200).json({ jobpostings: data, pages: pageCount, url: req.originalUrl });
+        return res.status(200).json({ jobpostings: data, pages: pageCount, url: req.originalUrl });
     } catch (error) {
         throw error;
     }

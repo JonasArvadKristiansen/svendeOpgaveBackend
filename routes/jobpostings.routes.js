@@ -12,9 +12,9 @@ router.get('/all', async (req, res, next) => {
 
 router.get('/filter', async (req, res, next) => {
     try {
-        const { deadline, minSalary, jobtype, search, newestJobpost } = req.query;
+        const { deadlineFirst, deadlineLast, minSalary, jobtype, search, newestJobpost } = req.query;
 
-        if (!(deadline || minSalary || jobtype || search || newestJobpost)) {
+        if (!(minSalary || jobtype || search || newestJobpost || deadlineFirst && deadlineLast)) {
             await jobpostings.allJobpostings(req, res);
         }
 
