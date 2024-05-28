@@ -231,11 +231,11 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
         }
 
         const jwtVerify = await jwt.verifyToken(req);
-        if(jwtVerify.type == "Social media user") {
-            userEmail = jwtVerify.email    
+        if (jwtVerify.type == 'Social media user') {
+            userEmail = jwtVerify.email;
         } else {
             const getUserEmail = await users.getEmail(jwtVerify.userId);
-            userEmail = getUserEmail.email
+            userEmail = getUserEmail.email;
         }
 
         // Process files in memory using multer

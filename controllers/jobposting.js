@@ -40,7 +40,7 @@ const filterJobpostings = async (req, res) => {
             whereValues.push(req.query.deadline);
         }
         if (req.query.minSalary) {
-            whereConditions.push('salary <= ?');
+            whereConditions.push('salary >= ?');
             whereValues.push(req.query.minSalary);
         }
         if (req.query.jobtype) {
