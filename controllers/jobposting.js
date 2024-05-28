@@ -99,7 +99,7 @@ const jobposting = async (req, res) => {
         const { jobpostingId } = req.query;
 
         const [data] = await db.query(
-            'SELECT *, companys.email companys.companyName, LEFT(companys.description, 535) AS companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
+            'SELECT *, companys.email, companys.companyName, LEFT(companys.description, 535) AS companyDescription, companys.jobpostingCount FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.id = ?',
             [jobpostingId]
         );
 
