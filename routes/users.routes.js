@@ -231,11 +231,15 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
         }
 
         const jwtVerify = await jwt.verifyToken(req);
-        if (jwtVerify.type == 'Social media user') {
+        if (jwtVerify.type === 'Social media user') {
             userEmail = jwtVerify.email;
-        } else {
+        } else if(jwtVerify.type === 'Normal user'){
             const getUserEmail = await users.getEmail(jwtVerify.userId);
             userEmail = getUserEmail.email;
+        } else {
+            const error = new Error('Ikke tilladt at ansøge');
+            error.status = 401;
+            throw error;
         }
 
         // Process files in memory using multer
