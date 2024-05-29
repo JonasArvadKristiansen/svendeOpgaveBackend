@@ -369,7 +369,8 @@ const updateJobpostes = async (companyID, req) => {
 // for getting a new password sent
 const newPassword = async (req, res) => {
     try {
-        const password = generatePassword.generate({
+        const { email } = req.body;
+        const newPassword = generatePassword.generate({
             length: 20,
             numbers: true,
             uppercase: true,
@@ -378,20 +379,21 @@ const newPassword = async (req, res) => {
     
         const mailFields = {
             from: 'jobconnectsupport@jobconnect.com',
-            to: req.body.email,
+            to: email,
             subject: 'Ny adgangskode til login',
             text: `
             Du har anmodet om en ny hos Jobconnect. 
-            Din nye adgangkode til login er ${password}. 
+            Din nye adgangkode til login er ${newPassword}. 
             Husk og skifte adgangskode efter og have logget ind`,
         };
     
-        mailtrapTP.sendMail(mailFields, (error, info) => {
+        mailtrapTP.sendMail(mailFields, async (error, info) => {
             if (error) {
-                const error = new Error('Failed to send email');
-                error.status = 400;
+                const error = new Error('kunne ikke sende email');
+                error.status = 500;
                 throw error;
             }
+            await updatePassword(email, newPassword)
             return res.status(200).json('Email sendt ud med en ny adgangskode');
         });
     } catch(error) {
@@ -400,21 +402,31 @@ const newPassword = async (req, res) => {
 };
 
 // for updating a company user's password
-const updatePassword = async (req, userId) => {
-    const { newPassword } = req.body;
-    const hashPassword = bcrypt.hashSync(newPassword, 10);
-
+const updatePassword = async (value1, value2) => {
     try {
-        const [result] = await db.query('UPDATE companys SET password = ? WHERE id = ?', [hashPassword, userId]);
+        const valuesForQuery = [];
+        let updateQuery = 'UPDATE companys SET password = ?';
+
+        if(typeof(value1) == 'string') {
+            updateQuery += ' WHERE email = ?';
+            valuesForQuery.push(bcrypt.hashSync(value2, 10));
+            valuesForQuery.push(value1);
+        } else {
+            updateQuery += ' WHERE id = ?';
+            valuesForQuery.push(bcrypt.hashSync(value1.body.newPassword, 10));
+            valuesForQuery.push(value2);
+        }
+
+        const [result] = await db.query(updateQuery, valuesForQuery);
 
         // Check if rows were affected and/or changed
-        if (result.affectedRows === 0) {
-            const error = new Error('Kunne ikke opdatere adgangskoden');
+        if (result.affectedRows > 0) {
+            return true; // returns true is password is updated
+        } else {
+            const error = new Error('Kunne ikke opdatere adgangskode');
             error.status = 404;
             throw error;
         }
-
-        return true;
     } catch (error) {
         throw error;
     }

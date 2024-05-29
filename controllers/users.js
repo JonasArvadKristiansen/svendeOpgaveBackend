@@ -212,9 +212,10 @@ const sendEmail = async (mailFields, res) => {
 };
 
 // for getting a new password sent
-const newPassword = async (req, res) => {
+const newUserPassword = async (req, res) => {
     try {
-        const password = generatePassword.generate({
+        const { email } = req.body;
+        const newPassword = generatePassword.generate({
             length: 20,
             numbers: true,
             uppercase: true,
@@ -223,20 +224,21 @@ const newPassword = async (req, res) => {
     
         const mailFields = {
             from: 'jobconnectsupport@jobconnect.com',
-            to: req.body.email,
+            to: email,
             subject: 'Ny adgangskode til login',
             text: `
             Du har anmodet om en ny hos Jobconnect. 
-            Din nye adgangkode til login er ${password}. 
+            Din nye adgangkode til login er ${newPassword}. 
             Husk og skifte adgangskode efter og have logget ind`,
         };
     
-        mailtrapTP.sendMail(mailFields, (error, info) => {
+        mailtrapTP.sendMail(mailFields, async (error, info) => {
             if (error) {
                 const error = new Error('kunne ikke sende email');
                 error.status = 500;
                 throw error;
             }
+            await updatePassword(email, newPassword)
             return res.status(200).json('Email sendt ud med en ny adgangskode');
         });
     } catch(error) {
@@ -245,12 +247,22 @@ const newPassword = async (req, res) => {
 };
 
 // for updating a user's password
-const updatePassword = async (req, userId) => {
+const updatePassword = async (value1, value2) => {
     try {
-        const newPassword = req.body.newPassword;
-        const hashPassword = bcrypt.hashSync(newPassword, 10);
+        const valuesForQuery = [];
+        let updateQuery = 'UPDATE users SET password = ?';
 
-        const [result] = await db.query('UPDATE users SET password = ? WHERE id = ?', [hashPassword, userId]);
+        if(typeof(value1) == 'string') {
+            updateQuery += ' WHERE email = ?';
+            valuesForQuery.push(bcrypt.hashSync(value2, 10));
+            valuesForQuery.push(value1);
+        } else {
+            updateQuery += ' WHERE id = ?';
+            valuesForQuery.push(bcrypt.hashSync(value1.body.newPassword, 10));
+            valuesForQuery.push(value2);
+        }
+
+        const [result] = await db.query(updateQuery, valuesForQuery);
 
         // Check if rows were affected and/or changed
         if (result.affectedRows > 0) {
@@ -293,7 +305,7 @@ module.exports = {
     checkSentPassword,
     update,
     sendEmail,
-    newPassword,
+    newUserPassword,
     updatePassword,
     deleteUser,
 };

@@ -271,7 +271,7 @@ router.post('/resetPassword', async (req, res, next) => {
         const userCheck = await users.userExist(email)
 
         if(userCheck) {
-            await users.newPassword(req, res)
+            await users.newUserPassword(req, res)
         } else {
             const error = new Error('Ingen bruger fundet med denne email');
             error.status = 404;
