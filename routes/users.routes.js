@@ -253,15 +253,30 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
             attachments: attachments,
         };
 
-        // Sending emails using npm nodemailer
-        mailtrapTP.sendMail(mailFields, (error, info) => {
-            if (error) {
-                const error = new Error('Failed to send email');
-                error.status = 400;
-                throw error;
-            }
-            res.json(200).json('Email sent successfully');
-        });
+        await users.sendEmail(mailFields, res);
+    } catch (error) {
+        next(error); // This pass error to the central error handler in server.js
+    }
+});
+
+router.post('/resetPassword', async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            const error = new Error('Mangler felt udfyldt');
+            error.status = 400;
+            throw error;
+        }
+        const userCheck = await users.userExist(email)
+
+        if(userCheck) {
+            await users.newPassword(req, res)
+        } else {
+            const error = new Error('Ingen bruger fundet med denne email');
+            error.status = 404;
+            throw error;
+        }
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }

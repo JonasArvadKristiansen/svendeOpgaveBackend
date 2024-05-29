@@ -5,17 +5,19 @@ require('dotenv').config();
 async function createJWT(user, res) {
     try {
         // Signing JWT
-        const accessToken = jsonwebtoken.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '2h' });
+        const accessToken = jsonwebtoken.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '5m' });
 
         // Set token in a cookie
 
         await res.cookie('Authorization', accessToken, {
+            maxAge: 5 * 60 * 1000, // max lifetime in millseconds
             httpOnly: false, // Not setting httpOnly
             secure: true, // Require HTTPS connection
             sameSite: 'None', // Allow cross-site requests
         });
 
-        /* await res.cookie('Authorization', accessToken, { 
+        /* await res.cookie('Authorization', accessToken, {
+            maxAge: 2 * 60 * 60 * 1000, // max lifetime in millseconds
             httpOnly: false, // Not setting httpOnly
             secure: true,    // Require HTTPS connection
             sameSite: true, // Allow cross-site requests

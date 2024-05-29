@@ -153,6 +153,29 @@ router.post('/create', async (req, res, next) => {
     }
 });
 
+router.post('/resetPassword', async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            const error = new Error('Mangler felt udfyldt');
+            error.status = 400;
+            throw error;
+        }
+        const companyCheck = await companys.companyExist(email)
+
+        if(companyCheck) {
+            await companys.newPassword(req, res)
+        } else {
+            const error = new Error('Ingen virksomheds bruger fundet med denne email');
+            error.status = 404;
+            throw error;
+        }
+    } catch (error) {
+        next(error); // This pass error to the central error handler in server.js
+    }
+});
+
 router.put('/update', async (req, res) => {
     try {
         const { companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;

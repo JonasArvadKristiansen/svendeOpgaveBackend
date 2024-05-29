@@ -1,5 +1,15 @@
 const bcrypt = require('bcrypt');
 const db = require('../utils/DB');
+const generatePassword = require('generate-password');
+const nodemailer = require('nodemailer');
+const mailtrapTP = nodemailer.createTransport({
+    host: process.env.MAILTRAP_HOST,
+    port: process.env.MAILTRAP_PORT,
+    auth: {
+        user: process.env.MAILTRAP_USER,
+        pass: process.env.MAILTRAP_PASS,
+    },
+});
 
 const allCompanys = async (req, res) => {
     try {
@@ -356,6 +366,39 @@ const updateJobpostes = async (companyID, req) => {
     }
 };
 
+// for getting a new password sent
+const newPassword = async (req, res) => {
+    try {
+        const password = generatePassword.generate({
+            length: 20,
+            numbers: true,
+            uppercase: true,
+            lowercase: true,
+        });
+    
+        const mailFields = {
+            from: 'jobconnectsupport@jobconnect.com',
+            to: req.body.email,
+            subject: 'Ny adgangskode til login',
+            text: `
+            Du har anmodet om en ny hos Jobconnect. 
+            Din nye adgangkode til login er ${password}. 
+            Husk og skifte adgangskode efter og have logget ind`,
+        };
+    
+        mailtrapTP.sendMail(mailFields, (error, info) => {
+            if (error) {
+                const error = new Error('Failed to send email');
+                error.status = 400;
+                throw error;
+            }
+            return res.status(200).json('Email sendt ud med en ny adgangskode');
+        });
+    } catch(error) {
+        throw error
+    }
+};
+
 // for updating a company user's password
 const updatePassword = async (req, userId) => {
     const { newPassword } = req.body;
@@ -408,6 +451,7 @@ module.exports = {
     allCompanysJobpostings,
     updateCompany,
     updateJobpostes,
+    newPassword,
     updatePassword,
     deleteCompanyUser,
 };
