@@ -223,7 +223,7 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
         const jwtVerify = await jwt.verifyToken(req);
         if (jwtVerify.type === 'Social media user') {
             userEmail = jwtVerify.email;
-        } else if(jwtVerify.type === 'Normal user'){
+        } else if (jwtVerify.type === 'Normal user') {
             const getUserEmail = await users.getEmail(jwtVerify.userId);
             userEmail = getUserEmail.email;
         } else {
@@ -262,10 +262,10 @@ router.post('/resetPassword', async (req, res, next) => {
             error.status = 400;
             throw error;
         }
-        const userCheck = await users.userExist(email)
+        const userCheck = await users.userExist(email);
 
-        if(userCheck) {
-            await users.newUserPassword(req, res)
+        if (userCheck) {
+            await users.newUserPassword(req, res);
         } else {
             const error = new Error('Ingen bruger fundet med denne email');
             error.status = 404;

@@ -14,7 +14,7 @@ router.get('/filter', async (req, res, next) => {
     try {
         const { deadlineFirst, deadlineLast, minSalary, jobtype, search, newestJobpost } = req.query;
 
-        if (!(minSalary || jobtype || search || newestJobpost || deadlineFirst && deadlineLast)) {
+        if (!(minSalary || jobtype || search || newestJobpost || (deadlineFirst && deadlineLast))) {
             await jobpostings.allJobpostings(req, res);
         }
 

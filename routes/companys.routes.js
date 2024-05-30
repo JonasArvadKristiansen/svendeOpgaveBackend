@@ -162,10 +162,10 @@ router.post('/resetPassword', async (req, res, next) => {
             error.status = 400;
             throw error;
         }
-        const companyCheck = await companys.companyExist(email)
+        const companyCheck = await companys.companyExist(email);
 
-        if(companyCheck) {
-            await companys.newPassword(req, res)
+        if (companyCheck) {
+            await companys.newPassword(req, res);
         } else {
             const error = new Error('Ingen virksomheds bruger fundet med denne email');
             error.status = 404;

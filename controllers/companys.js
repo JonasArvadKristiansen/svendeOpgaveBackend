@@ -376,7 +376,7 @@ const newPassword = async (req, res) => {
             uppercase: true,
             lowercase: true,
         });
-    
+
         const mailFields = {
             from: 'jobconnectsupport@jobconnect.com',
             to: email,
@@ -386,18 +386,18 @@ const newPassword = async (req, res) => {
             Din nye adgangkode til login er ${newPassword}. 
             Husk og skifte adgangskode efter og have logget ind`,
         };
-    
+
         mailtrapTP.sendMail(mailFields, async (error, info) => {
             if (error) {
                 const error = new Error('kunne ikke sende email');
                 error.status = 500;
                 throw error;
             }
-            await updatePassword(email, newPassword)
+            await updatePassword(email, newPassword);
             return res.status(200).json('Email sendt ud med en ny adgangskode');
         });
-    } catch(error) {
-        throw error
+    } catch (error) {
+        throw error;
     }
 };
 
@@ -407,7 +407,7 @@ const updatePassword = async (value1, value2) => {
         const valuesForQuery = [];
         let updateQuery = 'UPDATE companys SET password = ?';
 
-        if(typeof(value1) == 'string') {
+        if (typeof value1 == 'string') {
             updateQuery += ' WHERE email = ?';
             valuesForQuery.push(bcrypt.hashSync(value2, 10));
             valuesForQuery.push(value1);

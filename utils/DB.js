@@ -10,7 +10,7 @@ const con = mysql
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
         connectionLimit: process.env.DB_CONNECTIONLIMIT,
-        timezone: 'Z'
+        timezone: 'Z',
     })
     .promise();
 /* by using promise on connection, makes so the query can be awaited and 
