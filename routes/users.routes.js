@@ -3,7 +3,6 @@ const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 const multer = require('multer');
 const upload = multer();
-const nodemailer = require('nodemailer');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
 const loginLimit = rateLimit({
@@ -16,16 +15,6 @@ const loginLimit = rateLimit({
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
-
-// this is the config for mailtrap.io
-const mailtrapTP = nodemailer.createTransport({
-    host: process.env.MAILTRAP_HOST,
-    port: process.env.MAILTRAP_PORT,
-    auth: {
-        user: process.env.MAILTRAP_USER,
-        pass: process.env.MAILTRAP_PASS,
-    },
-});
 
 // Middleware for initialisere Passport
 router.use(passport.initialize());
