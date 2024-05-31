@@ -62,10 +62,12 @@ router.post('/create', async (req, res, next) => {
             throw error;
         }
 
-        await jobpostings.createJobposting(req, jwtVerify.userId);
-        await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId);
+        const createdJobpost = await jobpostings.createJobposting(req, jwtVerify.userId);
 
-        return res.status(200).json('Jobopslag oprettet');
+        if(createdJobpost.success) {
+            await jobpostings.plusCompanyJobpostingCount(jwtVerify.userId);
+            return res.status(200).json({message: 'Jobopslag oprettet', id: createdJobpost.id});
+        }
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }

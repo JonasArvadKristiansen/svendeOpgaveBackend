@@ -128,7 +128,7 @@ const createJobposting = async (req, companyID) => {
         }
 
         // Insert jobposting into the database
-        await db.query('INSERT INTO jobpostings (title, description, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+        const [queryData] = await db.query('INSERT INTO jobpostings (title, description, deadline, jobtype, companyID, address, city, phonenumber, email, salary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
             title,
             description,
             deadline,
@@ -141,7 +141,7 @@ const createJobposting = async (req, companyID) => {
             salary,
         ]);
 
-        return true; // Jobposting created successfully
+        return {success: true, id: queryData.insertId}; // Jobposting created successfully
     } catch (error) {
         throw error;
     }
