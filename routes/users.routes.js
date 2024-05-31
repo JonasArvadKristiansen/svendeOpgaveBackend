@@ -94,7 +94,7 @@ router.get('/auth/google/callback', loginLimit, passport.authenticate('google', 
             throw error;
         }
         // If authentication succeeds, create JWT
-        await jwt.createJWT(res.user, res);
+        await jwt.createJWT(req.user, res);
 
         return res.redirect(301, 'http://localhost:5173/');
     } catch (error) {
