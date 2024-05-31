@@ -65,7 +65,7 @@ passport.use(
             const tokenPayload = {
                 fullName: profile.displayName,
                 email: profile.emails[0].value,
-                type: 'google user',
+                type: 'Google user',
             };
 
             //saves by default tokenPayload in req.user
