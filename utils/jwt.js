@@ -20,7 +20,7 @@ async function createJWT(user, res) {
             maxAge: 2 * 60 * 60 * 1000, // max lifetime in millseconds
             httpOnly: false, // Not setting httpOnly
             secure: true,    // Require HTTPS connection
-            sameSite: true, // Allow cross-site requests
+            sameSite: strict, // Allow cross-site requests
             domain: 'jonasarvad.com' // Restrict cookie to this domain
         });
         */
