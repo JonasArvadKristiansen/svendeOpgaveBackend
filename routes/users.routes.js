@@ -39,7 +39,7 @@ passport.use(
             const tokenPayload = {
                 fullName: profile.displayName,
                 email: profile.emails[0].value,
-                type: 'Social media user',
+                type: 'Facebook user',
             };
 
             //saves by default tokenPayload in req.user
@@ -65,7 +65,7 @@ passport.use(
             const tokenPayload = {
                 fullName: profile.displayName,
                 email: profile.emails[0].value,
-                type: 'Social media user',
+                type: 'google user',
             };
 
             //saves by default tokenPayload in req.user
