@@ -1,5 +1,6 @@
 const db = require('../utils/DB');
 
+// getting all jobposts
 const allJobpostings = async (req, res) => {
     try {
         const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
@@ -24,6 +25,7 @@ const allJobpostings = async (req, res) => {
     }
 };
 
+// filter between jobposts
 const filterJobpostings = async (req, res) => {
     try {
         const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
@@ -94,6 +96,7 @@ const filterJobpostings = async (req, res) => {
     }
 };
 
+// getting jobpost info
 const jobposting = async (req, res) => {
     try {
         const { jobpostingId } = req.query;

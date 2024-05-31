@@ -90,7 +90,7 @@ const create = async (req) => {
     }
 };
 
-//checking if email is banned from use
+// checking if email is banned from use
 const bannedEmailCheck = async (email) => {
     try {
         const [data] = await db.query('SELECT * FROM bannedEmails WHERE email = ?', email);

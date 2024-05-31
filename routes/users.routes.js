@@ -74,7 +74,7 @@ passport.use(
     )
 );
 
-router.get('/info', async (req, res, next) => {
+router.get('/profile', async (req, res, next) => {
     try {
         //verifying token
         const jwtVerify = await jwt.verifyToken(req);

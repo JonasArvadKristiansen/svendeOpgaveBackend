@@ -11,6 +11,7 @@ const mailtrapTP = nodemailer.createTransport({
     },
 });
 
+// getting all companys
 const allCompanys = async (req, res) => {
     try {
         const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
@@ -31,6 +32,7 @@ const allCompanys = async (req, res) => {
     }
 };
 
+// filter between companys
 const filterCompanys = async (req, res) => {
     const currentPageNumber = parseInt(req.query.page) || 1;
     const rowsToSkip = (currentPageNumber - 1) * 10;
@@ -68,6 +70,7 @@ const filterCompanys = async (req, res) => {
     }
 };
 
+// getting a company users info
 const profile = async (req, res) => {
     const currentPageNumber = parseInt(req.query.page) || 1;
     const rowsToSkip = (currentPageNumber - 1) * 10;
@@ -97,6 +100,7 @@ const profile = async (req, res) => {
     }
 };
 
+// getting your company user info
 const getCompanyInfo = async (companyID, req, res) => {
     const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
     const rowsToSkip = (currentPageNumber - 1) * 10; // rows to skip
@@ -125,6 +129,7 @@ const getCompanyInfo = async (companyID, req, res) => {
     }
 };
 
+// login a company user
 const login = async (req) => {
     const { email, password } = req.body;
 
@@ -152,7 +157,7 @@ const login = async (req) => {
     }
 };
 
-//creating company user
+// creating company user
 const create = async (req) => {
     const { companyName, password, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes } = req.body;
 
@@ -174,7 +179,7 @@ const create = async (req) => {
     }
 };
 
-//checking if email is banned from use
+// checking if email is banned from use
 const bannedEmailCheck = async (email) => {
     try {
         const [data] = await db.query('SELECT * FROM bannedEmails WHERE email = ?', email);
@@ -185,7 +190,7 @@ const bannedEmailCheck = async (email) => {
     }
 };
 
-//checking if any company user with that email exists
+// checking if any company user with that email exists
 const companyExist = async (email, userId) => {
     try {
         const [data] = await db.query('SELECT * FROM companys WHERE email = ?', email);

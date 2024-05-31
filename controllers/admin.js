@@ -1,5 +1,6 @@
 const db = require('../utils/DB');
 
+// getting all statistics
 const allData = async (req, res) => {
     try {
         const [companyCount] = await db.query('SELECT COUNT(*) AS count FROM companys');
