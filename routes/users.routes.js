@@ -24,7 +24,7 @@ passport.use(
         {
             clientID: `${process.env.FACEBOOK_clientID}`, // key from facebook developer
             clientSecret: `${process.env.FACEBOOK_clientSecret}`, // key from facebook developer
-            callbackURL: 'https://jonasarvad.com/api/user/auth/facebook/callback', //part of offical documentation to call it this
+            callbackURL: 'http://localhost/api/user/auth/facebook/callback', //part of offical documentation to call it this
             profileFields: ['displayName', 'email'], //values collected from facebook profile after success login
             enableProof: true, //sha256 hash of your accesstoken, using clientSecret for protection against outside attacks
         },
@@ -94,7 +94,7 @@ router.get('/auth/google/callback', loginLimit, passport.authenticate('google', 
             throw error;
         }
         // If authentication succeeds, create JWT
-        await jwt.createJWT(response.user, res);
+        await jwt.createJWT(res.user, res);
 
         return res.redirect(301, 'https://jonasarvad.com/');
     } catch (error) {
