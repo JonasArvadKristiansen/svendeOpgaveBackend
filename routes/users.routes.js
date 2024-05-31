@@ -96,7 +96,7 @@ router.get('/auth/google/callback', loginLimit, passport.authenticate('google', 
         // If authentication succeeds, create JWT
         await jwt.createJWT(res.user, res);
 
-        return res.redirect(301, 'https://jonasarvad.com/');
+        return res.redirect(301, 'http://localhost:5173/');
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
@@ -116,7 +116,7 @@ router.get('/auth/facebook/callback', loginLimit, passport.authenticate('faceboo
         // If authentication succeeds, create JWT
         await jwt.createJWT(req.user, res);
 
-        return res.redirect(301, 'https://jonasarvad.com/');
+        return res.redirect(301, 'http://localhost:5173/');
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
