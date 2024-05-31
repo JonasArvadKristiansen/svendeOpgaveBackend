@@ -24,7 +24,7 @@ passport.use(
         {
             clientID: `${process.env.FACEBOOK_clientID}`, // key from facebook developer
             clientSecret: `${process.env.FACEBOOK_clientSecret}`, // key from facebook developer
-            callbackURL: 'http://localhost/api/user/auth/facebook/callback', //part of offical documentation to call it this
+            callbackURL: 'http://localhost:3000/api/user/auth/facebook/callback', //part of offical documentation to call it this
             profileFields: ['displayName', 'email'], //values collected from facebook profile after success login
             enableProof: true, //sha256 hash of your accesstoken, using clientSecret for protection against outside attacks
         },
