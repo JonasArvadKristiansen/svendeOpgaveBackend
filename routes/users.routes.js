@@ -221,7 +221,7 @@ router.post('/sendEmail', upload.array('files'), async (req, res, next) => {
         }
 
         const jwtVerify = await jwt.verifyToken(req);
-        if (jwtVerify.type === 'Social media user') {
+        if (jwtVerify.type === 'Facebook user' && jwtVerify.type === 'Google user') {
             userEmail = jwtVerify.email;
         } else if (jwtVerify.type === 'Normal user') {
             const getUserEmail = await users.getEmail(jwtVerify.userId);
