@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
-const loginLimit = require('../utils/loginlimter');
+//const loginLimit = require('../utils/loginlimter');
 
 router.get('/all', async (req, res, next) => {
     try {
@@ -61,7 +61,7 @@ router.get('/profile', async (req, res, next) => {
     }
 });
 
-router.post('/login', loginLimit, async (req, res, next) => {
+router.post('/login', async (req, res, next) => {
     try {
         const { email, password } = req.body;
 

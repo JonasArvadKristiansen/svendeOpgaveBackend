@@ -4,7 +4,7 @@ const jwt = require('../utils/jwt');
 const multer = require('multer');
 const upload = multer();
 const passport = require('passport');
-const loginLimit = require('../utils/loginlimter');
+//const loginLimit = require('../utils/loginlimter');
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
@@ -77,9 +77,9 @@ router.get('/profile', async (req, res, next) => {
     }
 });
 
-router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/auth/google/callback', loginLimit, passport.authenticate('google', { session: false }), async function (req, res, next) {
+router.get('/auth/google/callback', passport.authenticate('google', { session: false }), async function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for google failed');
@@ -96,10 +96,10 @@ router.get('/auth/google/callback', loginLimit, passport.authenticate('google', 
 });
 
 // Endpoint for Facebook login
-router.get('/auth/facebook', loginLimit, passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
+router.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
 
 //Endpoint gets called here after users login to facebook
-router.get('/auth/facebook/callback', loginLimit, passport.authenticate('facebook', { session: false }), async function (req, res, next) {
+router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), async function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for facebook failed');
@@ -115,7 +115,7 @@ router.get('/auth/facebook/callback', loginLimit, passport.authenticate('faceboo
     }
 });
 
-router.post('/login', loginLimit, async (req, res, next) => {
+router.post('/login', async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
