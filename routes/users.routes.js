@@ -3,6 +3,7 @@ const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 const multer = require('multer');
 const upload = multer();
+const loginLimit = require('../utils/loginlimter');
 const passport = require('passport');
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -18,7 +19,7 @@ passport.use(
             clientSecret: `${process.env.FACEBOOK_clientSecret}`, // key from facebook developer
             callbackURL: 'http://localhost:3000/api/user/auth/facebook/callback', //part of offical documentation to call it this
             profileFields: ['displayName', 'email'], //values collected from facebook profile after success login
-            enableProof: true, //sha256 hash of your accesstoken, using clientSecret for protection against outside attacks
+            enableProof: true, // sha256 hash of your accesstoken, using clientSecret for protection against outside attacks
         },
         function (accessToken, refreshToken, profile, callback) {
             // this part is called after users login regardless if success or fail
@@ -27,7 +28,7 @@ passport.use(
                 return callback(new Error('Profile information is incomplete'));
             }
 
-            //token payload
+            // token payload
             const tokenPayload = {
                 fullName: profile.displayName,
                 email: profile.emails[0].value,
@@ -76,9 +77,9 @@ router.get('/profile', async (req, res, next) => {
     }
 });
 
-router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/auth/google/callback', passport.authenticate('google', { session: false }), async function (req, res, next) {
+router.get('/auth/google/callback', loginLimit, passport.authenticate('google', { session: false }), async function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for google failed');
@@ -95,10 +96,10 @@ router.get('/auth/google/callback', passport.authenticate('google', { session: f
 });
 
 // Endpoint for Facebook login
-router.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
+router.get('/auth/facebook', loginLimit ,passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
 
 //Endpoint gets called here after users login to facebook
-router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), async function (req, res, next) {
+router.get('/auth/facebook/callback', loginLimit, passport.authenticate('facebook', { session: false }), async function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for facebook failed');
@@ -114,7 +115,7 @@ router.get('/auth/facebook/callback', passport.authenticate('facebook', { sessio
     }
 });
 
-router.post('/login', async (req, res, next) => {
+router.post('/login', loginLimit, async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
