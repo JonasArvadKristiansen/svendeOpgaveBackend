@@ -10,7 +10,7 @@ const loginLimit = require('./utils/loginlimiter');
 require('dotenv').config();
 
 // Set trust proxy
-app.set('trust proxy', ['95.179.236.120']);
+app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
 // Middleware
 app.use(cookieParser());
