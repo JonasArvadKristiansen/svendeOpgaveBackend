@@ -3,7 +3,6 @@ const users = require('../controllers/users');
 const jwt = require('../utils/jwt');
 const multer = require('multer');
 const upload = multer();
-const loginLimit = require('../utils/loginlimiter');
 const passport = require('passport');
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -17,7 +16,7 @@ passport.use(
         {
             clientID: `${process.env.FACEBOOK_clientID}`, // key from facebook developer
             clientSecret: `${process.env.FACEBOOK_clientSecret}`, // key from facebook developer
-            callbackURL: 'http://localhost:3000/api/user/auth/facebook/callback', //part of offical documentation to call it this
+            callbackURL: 'https://jonasarvad.com/api/user/auth/facebook/callback', //part of offical documentation to call it this
             profileFields: ['displayName', 'email'], //values collected from facebook profile after success login
             enableProof: true, // sha256 hash of your accesstoken, using clientSecret for protection against outside attacks
         },
@@ -77,9 +76,9 @@ router.get('/profile', async (req, res, next) => {
     }
 });
 
-router.get('/auth/google', loginLimit, passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/auth/google/callback', loginLimit, passport.authenticate('google', { session: false }), async function (req, res, next) {
+router.get('/auth/google/callback', passport.authenticate('google', { session: false }), async function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for google failed');
@@ -89,17 +88,17 @@ router.get('/auth/google/callback', loginLimit, passport.authenticate('google', 
         // If authentication succeeds, create JWT
         await jwt.createJWT(req.user, res);
 
-        return res.redirect(301, 'http://localhost:5173/');
+        return res.redirect(301, 'https://jonasarvad.com/');
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
 });
 
 // Endpoint for Facebook login
-router.get('/auth/facebook', loginLimit ,passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
+router.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'public_profile'] }));
 
 //Endpoint gets called here after users login to facebook
-router.get('/auth/facebook/callback', loginLimit, passport.authenticate('facebook', { session: false }), async function (req, res, next) {
+router.get('/auth/facebook/callback', passport.authenticate('facebook', { session: false }), async function (req, res, next) {
     try {
         if (!req.user) {
             const error = new Error('Login for facebook failed');
@@ -109,13 +108,13 @@ router.get('/auth/facebook/callback', loginLimit, passport.authenticate('faceboo
         // If authentication succeeds, create JWT
         await jwt.createJWT(req.user, res);
 
-        return res.redirect(301, 'http://localhost:5173/');
+        return res.redirect(301, 'https://jonasarvad.com/');
     } catch (error) {
         next(error); // This pass error to the central error handler in server.js
     }
 });
 
-router.post('/login', loginLimit, async (req, res, next) => {
+router.post('/login', async (req, res, next) => {
     try {
         const { email, password } = req.body;
 

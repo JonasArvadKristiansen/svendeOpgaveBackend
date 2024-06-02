@@ -61,7 +61,7 @@ router.get('/profile', async (req, res, next) => {
     }
 });
 
-router.post('/login', loginLimit, async (req, res, next) => {
+router.post('/login', async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
