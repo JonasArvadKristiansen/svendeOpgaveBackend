@@ -4,7 +4,6 @@ const jwt = require('../utils/jwt');
 const multer = require('multer');
 const upload = multer();
 const passport = require('passport');
-//const loginLimit = require('../utils/loginlimter');
 const FacebookStrategy = require('passport-facebook').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();

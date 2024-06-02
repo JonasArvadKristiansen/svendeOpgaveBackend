@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const companys = require('../controllers/companys');
 const jwt = require('../utils/jwt');
-//const loginLimit = require('../utils/loginlimter');
 
 router.get('/all', async (req, res, next) => {
     try {
