@@ -11,8 +11,9 @@ const mailtrapTP = nodemailer.createTransport({
     },
 });
 
-// getting all companys
-const allCompanys = async (req, res) => {
+/*
+// getting all companys paginated. Not in use, because missing frontend functionality
+const allCompanys2 = async (req, res) => {
     try {
         const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
         const rowsToSkip = (currentPageNumber - 1) * 10; // rows to skip
@@ -31,15 +32,28 @@ const allCompanys = async (req, res) => {
         throw error; // This pass error to the central error handler in server.js
     }
 };
+*/
 
-// filter between companys
-const filterCompanys = async (req, res) => {
+const allCompanys = async (req, res) => {
+    try {
+        // Query to fetch data for paginated page
+        const [companysData] = await db.query('SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount, jobtypes FROM companys');
+
+        res.status(200).json({ companys: companysData });
+    } catch (error) {
+        throw error; // This pass error to the central error handler in server.js
+    }
+};
+
+/*
+// filter between companys paginated. Not in use, because missing frontend functionality
+const filterCompanys2 = async (req, res) => {
     const currentPageNumber = parseInt(req.query.page) || 1;
     const rowsToSkip = (currentPageNumber - 1) * 10;
 
     try {
         let counterQuery = 'SELECT COUNT(*) AS count FROM companys';
-        let filterQuery = 'SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount FROM companys';
+        let filterQuery = 'SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount, jobtypes FROM companys';
         const whereConditions = [];
         const whereValues = [];
 
@@ -69,11 +83,39 @@ const filterCompanys = async (req, res) => {
         throw error; // This pass error to the central error handler in server.js
     }
 };
+*/
+
+const filterCompanys = async (req, res) => {
+    try {
+        let filterQuery = 'SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount, jobtypes FROM companys';
+        const whereConditions = [];
+        const whereValues = [];
+
+        if (req.query.jobtype) {
+            whereConditions.push('jobtypes LIKE ?');
+            whereValues.push(`%${req.query.jobtype}%`);
+        }
+        if (req.query.search) {
+            whereConditions.push('companyName LIKE ?');
+            whereValues.push(`%${req.query.search}%`);
+        }
+
+        if (whereConditions.length > 0) {
+            const whereClause = ' WHERE ' + whereConditions.join(' AND ');
+            counterQuery += whereClause;
+            filterQuery += whereClause;
+        }
+
+        const [companysData] = await db.query(filterQuery, [...whereValues ]);
+
+        res.status(200).json({ companys: companysData });
+    } catch (error) {
+        throw error; // This pass error to the central error handler in server.js
+    }
+};
 
 // getting a company users info
 const profile = async (req, res) => {
-    const currentPageNumber = parseInt(req.query.page) || 1;
-    const rowsToSkip = (currentPageNumber - 1) * 10;
     const { companyID } = req.query;
 
     try {
@@ -81,27 +123,25 @@ const profile = async (req, res) => {
             companyID,
         ]);
         const [jobpostingsData] = await db.query(
-            'SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ? LIMIT 10 OFFSET ?',
-            [companyID, rowsToSkip]
+            'SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ?',
+            [companyID]
         );
-        const [pageCountData] = await db.query('SELECT COUNT(*) AS count FROM jobpostings WHERE companyID = ?', [companyID]);
 
         if (!companyProfileData.length) {
             const error = new Error('Ingen virksomheds bruger fundet');
             error.status = 404;
             throw error;
         }
-
-        const pageCount = Math.ceil(pageCountData[0].count / 10);
-
-        res.status(200).json({ companyProfileData, jobpostingsData, pages: pageCount });
+        
+        res.status(200).json({ companyProfileData, jobpostingsData });
     } catch (error) {
         throw error; // This pass error to the central error handler in server.js
     }
 };
 
-// getting your company user info
-const getCompanyInfo = async (companyID, req, res) => {
+/*
+// getting your company user info paginated. Not in use, because missing frontend functionality
+const getCompanyInfo2 = async (companyID, req, res) => {
     const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
     const rowsToSkip = (currentPageNumber - 1) * 10; // rows to skip
 
@@ -124,6 +164,30 @@ const getCompanyInfo = async (companyID, req, res) => {
         const pageCount = Math.ceil(countData[0].count / 10);
 
         return res.status(200).json({ companyProfileData, jobpostingsData, pages: pageCount });
+    } catch (error) {
+        throw error; // This pass error to the central error handler in server.js
+    }
+};
+*/
+
+const getCompanyInfo = async (companyID, req, res) => {
+    try {
+        const [companyProfileData] = await db.query('SELECT companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?', [
+            companyID,
+        ]);
+        const [jobpostingsData] = await db.query(
+            'SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ?',
+            [companyID]
+        );
+
+        if (!companyProfileData.length) {
+            const error = new Error('Ingen virksomheds bruger fundet');
+            error.status = 404;
+            throw error;
+        }
+
+
+        return res.status(200).json({ companyProfileData, jobpostingsData });
     } catch (error) {
         throw error; // This pass error to the central error handler in server.js
     }

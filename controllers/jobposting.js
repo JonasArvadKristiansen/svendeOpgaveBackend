@@ -1,7 +1,8 @@
 const db = require('../utils/DB');
 
-// getting all jobposts
-const allJobpostings = async (req, res) => {
+/*
+// getting all jobposts paginated. Not in use, because missing frontend functionality
+const allJobpostings2 = async (req, res) => {
     try {
         const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
         const rowsToSkip = (currentPageNumber - 1) * 10; // rows to skip
@@ -24,9 +25,24 @@ const allJobpostings = async (req, res) => {
         throw error;
     }
 };
+*/
 
-// filter between jobposts
-const filterJobpostings = async (req, res) => {
+const allJobpostings = async (req, res) => {
+    try {
+        // query to fetch data
+        const [data] = await db.query(
+            `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.address, companys.companyName FROM jobpostings 
+            INNER JOIN companys ON jobpostings.companyID = companys.id`);
+
+        return res.status(200).json({ jobpostings: data });
+    } catch (error) {
+        throw error;
+    }
+};
+
+/*
+// filter between jobposts paginated. Not in use, because missing frontend functionality
+const filterJobpostings2 = async (req, res) => {
     try {
         const currentPageNumber = parseInt(req.query.page) || 1; // starting page / next page
         const rowsToSkip = (currentPageNumber - 1) * 10; //rows to skip
@@ -91,6 +107,63 @@ const filterJobpostings = async (req, res) => {
         const [data] = await db.query(filterQuery, [...whereValues, rowsToSkip]);
 
         return res.status(200).json({ jobpostings: data, pages: pageCount, url: req.originalUrl });
+    } catch (error) {
+        throw error;
+    }
+};
+*/
+
+const filterJobpostings = async (req, res) => {
+    try {
+        let whereConditions = [];
+        let whereValues = [];
+
+        // if conditions checking if some or all query parameters are present
+        if (req.query.deadlineFirst && req.query.deadlineLast) {
+            whereConditions.push('deadline BETWEEN ? AND ?');
+            whereValues.push(req.query.deadlineFirst, req.query.deadlineLast);
+        }
+        if (req.query.minSalary) {
+            whereConditions.push('salary >= ?');
+            whereValues.push(req.query.minSalary);
+        }
+        if (req.query.jobtype) {
+            whereConditions.push('jobtype LIKE ?');
+            whereValues.push(`%${req.query.jobtype}%`);
+        }
+        if (req.query.search) {
+            whereConditions.push('(companyName LIKE ?)');
+            whereValues.push(`%${req.query.search}%`);
+        }
+
+        // adding the WHERE clause if there are conditions
+        if (whereConditions.length > 0) {
+            counterQuery += ' WHERE ' + whereConditions.join(' AND ');
+        }
+
+        // select query for getting data
+        let filterQuery = `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.address, companys.companyName 
+        FROM jobpostings 
+        INNER JOIN companys ON jobpostings.companyID = companys.id`;
+
+        // adding the WHERE clause if there are conditions
+        if (whereConditions.length > 0) {
+            filterQuery += ' WHERE ' + whereConditions.join(' AND ');
+        }
+
+        // adding order by clause based on newestJobpost
+        if (req.query.newestJobpost) {
+            if (req.query.newestJobpost.toLowerCase() === 'new') {
+                filterQuery += ' ORDER BY jobpostings.id DESC';
+            } else if (req.query.newestJobpost.toLowerCase() === 'old') {
+                filterQuery += ' ORDER BY jobpostings.id ASC';
+            }
+        }
+
+        // query to fetch data for paginated page and ... spread operator is used to copy one a array to a new one
+        const [data] = await db.query(filterQuery, [...whereValues ]);
+
+        return res.status(200).json({ jobpostings: data });
     } catch (error) {
         throw error;
     }
