@@ -45,7 +45,7 @@ passport.use(
         {
             clientID: `${process.env.GOOGLE_clientID}`,
             clientSecret: `${process.env.GOOGLE_clientSecret}`,
-            callbackURL: 'http://localhost:3000/api/user/auth/google/callback',
+            callbackURL: 'https://jonasarvad.com/api/user/auth/google/callback',
         },
         function (accessToken, refreshToken, profile, callback) {
             if (!profile || !profile.emails || profile.emails.length === 0) {
