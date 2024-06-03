@@ -225,7 +225,7 @@ const create = async (req) => {
 
     try {
         // Inserting data into the database
-        const result = await db.query(
+        const [result] = await db.query(
             'INSERT INTO companys (companyName, password, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes, jobpostingCount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [companyName, hashPassword, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes.join(','), 0]
         );
