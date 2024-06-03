@@ -175,10 +175,6 @@ const getCompanyInfo = async (companyID, req, res) => {
         const [companyProfileData] = await db.query('SELECT companyName, description, address, city, phonenumber, email, numberOfEmployees, cvrNumber, jobtypes FROM companys WHERE id = ?', [
             companyID,
         ]);
-        const [jobpostingsData] = await db.query(
-            'SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobtype, jobpostings.address, companys.companyName FROM jobpostings INNER JOIN companys ON jobpostings.companyID = companys.id WHERE jobpostings.companyID = ?',
-            [companyID]
-        );
 
         if (!companyProfileData.length) {
             const error = new Error('Ingen virksomheds bruger fundet');
@@ -186,8 +182,7 @@ const getCompanyInfo = async (companyID, req, res) => {
             throw error;
         }
 
-
-        return res.status(200).json({ companyProfileData, jobpostingsData });
+        return res.status(200).json({ companyProfileData });
     } catch (error) {
         throw error; // This pass error to the central error handler in server.js
     }
