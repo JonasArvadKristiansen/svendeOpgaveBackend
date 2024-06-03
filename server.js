@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const cors = require('cors')
 const users = require('./routes/users.routes');
 const admin = require('./routes/admin.routes');
 const companys = require('./routes/companys.routes');
@@ -9,10 +10,11 @@ const jobpostings = require('./routes/jobpostings.routes');
 const loginLimit = require('./utils/loginlimiter');
 require('dotenv').config();
 
-// Set trust proxy
-app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
-
 // Middleware
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+}));
 app.use(cookieParser());
 app.use(helmet());
 app.use(express.json());
