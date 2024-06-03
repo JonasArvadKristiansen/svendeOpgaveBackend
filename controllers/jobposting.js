@@ -31,7 +31,7 @@ const allJobpostings = async (req, res) => {
     try {
         // query to fetch data
         const [data] = await db.query(
-            `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.address, companys.companyName FROM jobpostings 
+            `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.jobtype, jobpostings.address, companys.companyName FROM jobpostings 
             INNER JOIN companys ON jobpostings.companyID = companys.id`);
 
         return res.status(200).json({ jobpostings: data });
@@ -142,7 +142,7 @@ const filterJobpostings = async (req, res) => {
         }
 
         // select query for getting data
-        let filterQuery = `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.address, companys.companyName 
+        let filterQuery = `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.jobtype, jobpostings.address, companys.companyName 
         FROM jobpostings 
         INNER JOIN companys ON jobpostings.companyID = companys.id`;
 
