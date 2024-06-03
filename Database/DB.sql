@@ -28,7 +28,7 @@ city VARCHAR(255) NOT NULL,
 phonenumber INT NOT NULL,
 email VARCHAR(255) NOT NULL,
 numberOfEmployees INT NOT NULL,
-cvrNumber INT NOT NULL,
+cvrNumber INT(20) NOT NULL,
 jobtypes VARCHAR(255) NOT NULL,
 jobpostingCount INT NOT NULL
 );
