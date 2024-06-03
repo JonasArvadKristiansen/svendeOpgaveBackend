@@ -45,7 +45,7 @@ async function verifyToken(req) {
                     reject(customError);
                 } else {
                     // Resolve with decoded token
-                    resolve({ userId: decodedToken.user.id, type: decodedToken.user.type });
+                    resolve({ userId: decodedToken.user.id, type: decodedToken.user.type, email: decodedToken.user.email });
                 }
             });
         } else {
