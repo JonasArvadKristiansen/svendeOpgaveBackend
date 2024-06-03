@@ -16,15 +16,6 @@ async function createJWT(user, res) {
             sameSite: 'None', // Allow cross-site requests
         });
 
-        /* await res.cookie('Authorization', accessToken, {
-            maxAge: 2 * 60 * 60 * 1000, // max lifetime in millseconds
-            httpOnly: false, // Not setting httpOnly
-            secure: true,    // Require HTTPS connection
-            sameSite: strict, // Allow cross-site requests
-            domain: 'jonasarvad.com' // Restrict cookie to this domain
-        });
-        */
-
         return true;
     } catch (error) {
         throw error;
