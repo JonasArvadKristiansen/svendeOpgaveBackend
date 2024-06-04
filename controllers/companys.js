@@ -37,7 +37,7 @@ const allCompanys2 = async (req, res) => {
 const allCompanys = async (req, res) => {
     try {
         // Query to fetch data for paginated page
-        const [companysData] = await db.query('SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount, jobtypes FROM companys');
+        const [companysData] = await db.query('SELECT id, companyName, LEFT(description, 535) AS description, jobpostingCount, jobtypes FROM companys ORDER BY id DESC');
 
         res.status(200).json({ companys: companysData });
     } catch (error) {
@@ -102,12 +102,13 @@ const filterCompanys = async (req, res) => {
 
         if (whereConditions.length > 0) {
             const whereClause = ' WHERE ' + whereConditions.join(' AND ');
-            counterQuery += whereClause;
             filterQuery += whereClause;
         }
 
-        const [companysData] = await db.query(filterQuery, [...whereValues ]);
+        filterQuery += ' ORDER BY id DESC';
 
+        const [companysData] = await db.query(filterQuery, [...whereValues ]);
+        
         res.status(200).json({ companys: companysData });
     } catch (error) {
         throw error; // This pass error to the central error handler in server.js

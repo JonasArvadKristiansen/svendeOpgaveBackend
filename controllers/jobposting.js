@@ -32,7 +32,7 @@ const allJobpostings = async (req, res) => {
         // query to fetch data
         const [data] = await db.query(
             `SELECT jobpostings.id, title, LEFT(jobpostings.description, 535) AS description, deadline, jobpostings.jobtype, jobpostings.address, companys.companyName FROM jobpostings 
-            INNER JOIN companys ON jobpostings.companyID = companys.id`);
+            INNER JOIN companys ON jobpostings.companyID = companys.id ORDER BY jobpostings.id DESC`);
 
         return res.status(200).json({ jobpostings: data });
     } catch (error) {
@@ -134,11 +134,6 @@ const filterJobpostings = async (req, res) => {
         if (req.query.search) {
             whereConditions.push('(companyName LIKE ?)');
             whereValues.push(`%${req.query.search}%`);
-        }
-
-        // adding the WHERE clause if there are conditions
-        if (whereConditions.length > 0) {
-            counterQuery += ' WHERE ' + whereConditions.join(' AND ');
         }
 
         // select query for getting data
