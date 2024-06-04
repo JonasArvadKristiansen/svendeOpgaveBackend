@@ -1,17 +1,17 @@
 INSERT INTO users (fullName, password, email, phonenumber, isAdmin) VALUES
-('John Doe', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'john.doe@example.com', '1234567890', TRUE),
+('John Doe', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'john.doe@example.com', '1234567890', FALSE),
 ('Jane Smith', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'jane.smith@example.com', '0987654321', FALSE),
 ('Alice Johnson', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'alice.johnson@example.com', '1122334455', FALSE),
-('Bob Brown', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'bob.brown@example.com', '5566778899', TRUE),
+('Bob Brown', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'bob.brown@example.com', '5566778899', FALSE),
 ('Charlie Davis', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'charlie.davis@example.com', '2233445566', FALSE),
 ('Emily Clark', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'emily.clark@example.com', '6677889900', FALSE),
-('Frank Harris', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'frank.harris@example.com', '3344556677', TRUE),
+('Frank Harris', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'frank.harris@example.com', '3344556677', FALSE),
 ('Grace Lewis', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'grace.lewis@example.com', '7788990011', FALSE),
 ('Hannah Walker', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'hannah.walker@example.com', '4455667788', FALSE),
-('Ivy Hall', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'ivy.hall@example.com', '8899001122', TRUE),
+('Ivy Hall', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'ivy.hall@example.com', '8899001122', FALSE),
 ('Jack Young', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'jack.young@example.com', '5566778890', FALSE),
 ('Karen Wright', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'karen.wright@example.com', '3344667788', FALSE),
-('Leo King', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'leo.king@example.com', '9988776655', TRUE),
+('Leo King', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'leo.king@example.com', '9988776655', FALSE),
 ('Mia Scott', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'mia.scott@example.com', '7766554433', FALSE),
 ('Nina Green', '$2b$10$ihyKOJriHG15QSF.y2faD.rk62vbkp2yDq0pFtRJTxfmccBPiS1h2', 'nina.green@example.com', '1234432112', FALSE);
 
