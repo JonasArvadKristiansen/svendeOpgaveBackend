@@ -8,12 +8,11 @@ async function createJWT(user, res) {
         const accessToken = jsonwebtoken.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '2h' });
 
         // Set token in a cookie
-
         await res.cookie('Authorization', accessToken, {
             maxAge: 2 * 60 * 60 * 1000, // max lifetime in millseconds
             httpOnly: false, // Not setting httpOnly
             secure: true, // Require HTTPS connection
-            sameSite: 'None', // Allow cross-site requests
+            sameSite: 'strict', // Allow cross-site requests
         });
 
         return true;
