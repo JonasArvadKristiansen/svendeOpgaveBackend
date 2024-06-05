@@ -3,20 +3,35 @@ Hvis den går igennem skal man oprette en .env fil.
 Efter oprettelsen af .env skal man kopier det her ind
 
 DB_HOSTNAME = 127.0.0.1
+
 DB_PORT = 
+
 DB_USER = root
+
 DB_PASSWORD = 
+
 DB_NAME = Jobsite
+
 DB_CONNECTIONLIMIT = 100
+
 TOKEN_SECRET = ""
+
 FACEBOOK_clientID = ""
+
 FACEBOOK_clientSecret = ""
+
 GOOGLE_clientID = ""
+
 GOOGLE_clientSecret = ""
+
 ACCESS_TOKEN = ""
+
 MAILTRAP_HOST = sandbox.smtp.mailtrap.io
+
 MAILTRAP_PORT = 2525
+
 MAILTRAP_USER = ""
+
 MAILTRAP_PASS = ""
 
 Værdier der ikke er udfyldt skal udfyldes med egen information. Eksempelvis
